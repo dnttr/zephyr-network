@@ -1,4 +1,4 @@
-package org.dnttr.zephyr.network.channel;
+package org.dnttr.zephyr.network.core.channel;
 
 /**
  * @author dnttr

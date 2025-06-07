@@ -1,4 +1,4 @@
-package org.dnttr.zephyr.network.codec;
+package org.dnttr.zephyr.network.core.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -51,7 +51,7 @@ public class PacketDecoder extends ByteToMessageDecoder {
                 buffer.skipBytes(buffer.readableBytes());
             }
         } else {
-            ctx.channel().disconnect(); //weird things happen, don't they?
+            ctx.channel().disconnect();
         }
     }
 }

@@ -1,4 +1,4 @@
-package org.dnttr.zephyr.network;
+package org.dnttr.zephyr.network.core;
 
 import org.dnttr.zephyr.protocol.packet.Packet;
 

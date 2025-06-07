@@ -1,4 +1,4 @@
-package org.dnttr.zephyr.network.packet;
+package org.dnttr.zephyr.network.core.packet;
 
 import java.util.IdentityHashMap;
 

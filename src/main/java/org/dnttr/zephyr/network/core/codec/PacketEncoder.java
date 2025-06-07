@@ -1,4 +1,4 @@
-package org.dnttr.zephyr.network.codec;
+package org.dnttr.zephyr.network.core.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;

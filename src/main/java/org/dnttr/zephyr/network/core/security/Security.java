@@ -1,4 +1,4 @@
-package org.dnttr.zephyr.network.security;
+package org.dnttr.zephyr.network.core.security;
 
 /**
  * @author dnttr
