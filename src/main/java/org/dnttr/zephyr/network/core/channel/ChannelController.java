@@ -32,7 +32,7 @@ public final class ChannelController {
         });
     }
 
-    private void fireRead(@NotNull ChannelContext context, @NotNull Packet msg) {
+    public void fireRead(@NotNull ChannelContext context, @NotNull Packet msg) {
         if (!context.isReady()) {
             return;
         }
@@ -40,7 +40,7 @@ public final class ChannelController {
         this.session.onRead(context.getConsumer(), msg);
     }
 
-    private void fireReadComplete(@NotNull ChannelContext context) {
+    public void fireReadComplete(@NotNull ChannelContext context) {
         if (!context.isReady()) {
             return;
         }
@@ -48,7 +48,7 @@ public final class ChannelController {
         this.session.onReadComplete(context.getConsumer());
     }
 
-    private void fireActive(@NotNull ChannelContext context) {
+    public void fireActive(@NotNull ChannelContext context) {
         if (!context.isReady()) {
             return;
         }
@@ -56,7 +56,7 @@ public final class ChannelController {
         this.session.onActive(context.getConsumer());
     }
 
-    private void fireInactive(@NotNull ChannelContext context) {
+    public void fireInactive(@NotNull ChannelContext context) {
         if (!context.isReady()) {
             return;
         }
@@ -64,7 +64,7 @@ public final class ChannelController {
         this.session.onInactive(context.getConsumer());
     }
 
-    private void fireWrite(@NotNull ChannelContext context, @NotNull Packet msg) {
+    public void fireWrite(@NotNull ChannelContext context, @NotNull Packet msg) {
         if (!context.isReady()) {
             return;
         }
@@ -72,7 +72,7 @@ public final class ChannelController {
         this.session.onWrite(context.getConsumer(), msg);
     }
 
-    private void fireWriteComplete(@NotNull ChannelContext context, @NotNull Packet msg) {
+    public void fireWriteComplete(@NotNull ChannelContext context, @NotNull Packet msg) {
         if (!context.isReady()) {
             return;
         }
@@ -80,7 +80,7 @@ public final class ChannelController {
         this.session.onWriteComplete(context.getConsumer(), msg);
     }
 
-    private void fireRestriction(@NotNull ChannelContext context) {
+    public void fireRestriction(@NotNull ChannelContext context) {
         this.session.onRestriction(context.getConsumer());
     }
 }
