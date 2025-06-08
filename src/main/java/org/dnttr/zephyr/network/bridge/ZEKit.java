@@ -1,5 +1,6 @@
 package org.dnttr.zephyr.network.bridge;
 
+import lombok.Getter;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
@@ -17,19 +18,28 @@ import org.jetbrains.annotations.ApiStatus;
 @ApiStatus.Internal
 public final class ZEKit {
 
+    public enum Type {
+        SYMMETRIC(0),
+        ASYMMETRIC(1),
+        NONE(2);
+
+        @Getter
+        private final int value;
+
+        Type(int value) {
+            this.value = value;
+        }
+    }
+
     /**
      * Creates a new session.
-     *
-     * @param u unique identifier for the session identifier
-     * @return 0 on success, non-zero on failure
      */
-    public static native int ffi_zm_open_session(long u);
+    public static native long ffi_zm_open_session();
 
     /**
      * Closes an existing session.
      *
      * @param u unique identifier for the session
-     * @return 0 on success, non-zero on failure
      */
     public static native int ffi_zm_close_session(long u);
 
@@ -39,10 +49,8 @@ public final class ZEKit {
      * @param u unique identifier for the session
      * @param b1 buffer containing message to process
      * @param b2 buffer containing aead
-     * @param b3_ptr buffer to store the encrypted message
-     * @return 0 on success, non-zero on failure
      */
-    public static native int ffi_ze_encrypt_symmetric(long u, byte[] b1, byte[] b2, byte[] b3_ptr);
+    public static native byte[] ffi_ze_encrypt_symmetric(long u, byte[] b1, byte[] b2);
 
     /**
      * Decrypts a message in symmetric mode.
@@ -50,30 +58,24 @@ public final class ZEKit {
      * @param u unique identifier for the session
      * @param b1 buffer containing message to process
      * @param b2 buffer containing aead
-     * @param b3_ptr buffer to store the decrypted message
-     * @return 0 on success, non-zero on failure
      */
-    public static native int ffi_ze_decrypt_symmetric(long u, byte[] b1, byte[] b2, byte[] b3_ptr);
+    public static native byte[] ffi_ze_decrypt_symmetric(long u, byte[] b1, byte[] b2);
 
     /**
      * Encrypts a message in asymmetric mode.
      *
      * @param u unique identifier for the session
      * @param b1 buffer containing message to process
-     * @param b2_ptr buffer to store the encrypted message
-     * @return 0 on success, non-zero on failure
      */
-    public static native int ffi_ze_encrypt_asymmetric(long u, byte[] b1, byte[] b2_ptr);
+    public static native byte[] ffi_ze_encrypt_asymmetric(long u, byte[] b1);
 
     /**
      * Decrypts a message in asymmetric mode.
      *
      * @param u unique identifier for the session
      * @param b1 buffer containing message to process
-     * @param b2_ptr buffer to store the decrypted message
-     * @return 0 on success, non-zero on failure
      */
-    public static native int ffi_ze_decrypt_asymmetric(long u, byte[] b1, byte[] b2_ptr);
+    public static native byte[] ffi_ze_decrypt_asymmetric(long u, byte[] b1);
 
 
     /**
@@ -89,11 +91,10 @@ public final class ZEKit {
      * <br>
      * @param u unique identifier for the session
      * @param m mode of operation
-     * @return 0 on success, non-zero on failure
      */
-    public static native int ffi_ze_nonce(long u, int m);
+    public static native void ffi_ze_nonce(long u, int m);
 
-    public static native int ffi_ze_key(long u, int m);
+    public static native void ffi_ze_key(long u, int m);
 
     public static native void ffi_ze_close();
 }
