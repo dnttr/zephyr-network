@@ -4,8 +4,8 @@ import org.dnttr.zephyr.event.EventBus;
 import org.dnttr.zephyr.event.EventSubscriber;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.flow.Observer;
-import org.dnttr.zephyr.network.communication.core.flow.events.PacketReceivedEvent;
-import org.dnttr.zephyr.network.communication.core.flow.events.PacketSentEvent;
+import org.dnttr.zephyr.network.communication.core.flow.events.packet.PacketReceivedEvent;
+import org.dnttr.zephyr.network.communication.core.flow.events.packet.PacketSentEvent;
 import org.dnttr.zephyr.network.communication.core.packet.Packet;
 import org.dnttr.zephyr.network.communication.core.packet.processor.Direction;
 
