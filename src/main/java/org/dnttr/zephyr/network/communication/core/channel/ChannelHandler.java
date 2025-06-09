@@ -1,10 +1,9 @@
 package org.dnttr.zephyr.network.communication.core.channel;
 
 import lombok.RequiredArgsConstructor;
-import org.dnttr.zephyr.network.communication.core.packet.Packet;
+import org.dnttr.zephyr.network.protocol.Packet;
 import org.dnttr.zephyr.network.communication.core.packet.Carrier;
 import org.dnttr.zephyr.network.communication.core.packet.processor.Direction;
-import org.dnttr.zephyr.network.communication.core.packet.processor.Transformer;
 import org.dnttr.zephyr.network.communication.core.utilities.PacketUtils;
 
 /**

@@ -3,7 +3,7 @@ package org.dnttr.zephyr.network.communication.core.flow;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
-import org.dnttr.zephyr.network.communication.core.packet.Packet;
+import org.dnttr.zephyr.network.protocol.Packet;
 import org.dnttr.zephyr.network.communication.core.packet.processor.Direction;
 import org.jetbrains.annotations.NotNull;
 

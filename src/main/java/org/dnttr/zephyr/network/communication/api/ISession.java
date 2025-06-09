@@ -1,7 +1,7 @@
 package org.dnttr.zephyr.network.communication.api;
 
 import org.dnttr.zephyr.network.communication.core.Consumer;
-import org.dnttr.zephyr.network.communication.core.packet.Packet;
+import org.dnttr.zephyr.network.protocol.Packet;
 
 /**
  * @author dnttr

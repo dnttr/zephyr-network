@@ -6,7 +6,7 @@ import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.flow.Observer;
 import org.dnttr.zephyr.network.communication.core.flow.events.packet.PacketReceivedEvent;
 import org.dnttr.zephyr.network.communication.core.flow.events.packet.PacketSentEvent;
-import org.dnttr.zephyr.network.communication.core.packet.Packet;
+import org.dnttr.zephyr.network.protocol.Packet;
 import org.dnttr.zephyr.network.communication.core.packet.processor.Direction;
 
 import java.util.List;
