@@ -96,5 +96,17 @@ public final class ZEKit {
 
     public static native void ffi_ze_key(long u, int m);
 
+    public static native void ffi_ze_set_asymmetric_key(long u, int m, byte[] key);
+
+    public static native void ffi_ze_set_symmetric_key(long u, byte[] key);
+
+    public static native void ffi_ze_set_nonce(long u, int m, byte[] nonce);
+
+    public static native byte[] ffi_ze_get_asymmetric_key(long u, int m);
+
+    public static native byte[] ffi_ze_get_symmetric_key(long u);
+
+    public static native byte[] ffi_ze_get_nonce(long u, int m);
+
     public static native void ffi_ze_close();
 }

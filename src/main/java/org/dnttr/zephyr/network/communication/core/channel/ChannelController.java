@@ -4,7 +4,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import org.dnttr.zephyr.network.communication.api.ISession;
 import org.dnttr.zephyr.network.communication.core.packet.Data;
-import org.dnttr.zephyr.network.communication.core.packet.Processor;
+import org.dnttr.zephyr.network.communication.core.packet.processor.Transformer;
 import org.dnttr.zephyr.protocol.packet.Packet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -21,19 +21,19 @@ public class ChannelController {
     private final ISession session;
 
     @Getter(AccessLevel.PACKAGE)
-    private final Processor processor;
+    private final Transformer transformer;
 
     public ChannelController(ISession session) {
         this.session = session;
 
-        processor = new Processor();
+        transformer = new Transformer();
     }
 
     @SafeVarargs
     public final void addPackets(@NotNull Class<? extends Packet>... packets) {
         Arrays.stream(packets).takeWhile(packet -> packet.isAnnotationPresent(Data.class)).forEach(packet -> {
             Data data = packet.getDeclaredAnnotation(Data.class);
-            this.getProcessor().getPackets().put(data.identity(), packet);
+            this.getTransformer().getPackets().put(data.identity(), packet);
         });
     }
 

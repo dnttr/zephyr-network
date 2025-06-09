@@ -22,6 +22,7 @@ public final class ChannelContext {
     private final long uuid;
 
     private byte[] secret;
+    private byte[] nonce; //It is public so nobody cares about it
 
     private ZEKit.Type encryptionType;
 
