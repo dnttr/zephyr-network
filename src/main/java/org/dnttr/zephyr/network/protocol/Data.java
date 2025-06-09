@@ -1,4 +1,4 @@
-package org.dnttr.zephyr.network.communication.core.packet;
+package org.dnttr.zephyr.network.protocol;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

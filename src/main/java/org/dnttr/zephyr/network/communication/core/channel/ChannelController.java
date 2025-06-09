@@ -3,9 +3,9 @@ package org.dnttr.zephyr.network.communication.core.channel;
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.dnttr.zephyr.network.communication.api.ISession;
-import org.dnttr.zephyr.network.communication.core.packet.Data;
+import org.dnttr.zephyr.network.communication.core.packet.Packet;
+import org.dnttr.zephyr.network.protocol.Data;
 import org.dnttr.zephyr.network.communication.core.packet.processor.Transformer;
-import org.dnttr.zephyr.protocol.packet.Packet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 

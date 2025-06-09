@@ -38,7 +38,7 @@ public class Transformer {
         this.security = new JSecurity();
     }
 
-    public Object transform(Type target, Object message, ChannelContext context) throws Exception {
+    public Object transform(Direction direction, Object message, ChannelContext context) throws Exception {
         final boolean isProviderAvailable = this.security.isIntegrityProviderAvailable(context.getSecret());
 
         IProcessor processor;
@@ -49,7 +49,7 @@ public class Transformer {
             default -> throw new IllegalArgumentException("Unrecognized encryption type: " + context.getEncryptionType());
         }
 
-        switch (target) {
+        switch (direction) {
             case INBOUND -> {
                 if (message instanceof Carrier carrier) {
                     ByteBuf content = carrier.buffer();
@@ -118,12 +118,7 @@ public class Transformer {
                     throw new IllegalArgumentException("Outbound processing requires a Packet type, but received: " + message.getClass().getSimpleName());
                 }
             }
-            default -> throw new IllegalArgumentException("Unknown target type: " + target);
+            default -> throw new IllegalArgumentException("Unknown target type: " + direction);
         }
-    }
-
-    public enum Type {
-        INBOUND,
-        OUTBOUND
     }
 }

@@ -1,5 +1,7 @@
 package org.dnttr.zephyr.network.communication.core.packet;
 
+import org.dnttr.zephyr.network.protocol.Data;
+
 /**
  * @author dnttr
  */

@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.packet.Packet;
+import org.dnttr.zephyr.network.communication.core.packet.processor.Direction;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.CompletableFuture;
@@ -19,6 +20,9 @@ import java.util.function.Function;
 public class Observer extends CompletableFuture<Packet> {
 
     private final Class<? extends Packet> klass;
+
+    @Getter
+    private final Direction direction;
 
     @Getter
     private final ChannelContext context;
