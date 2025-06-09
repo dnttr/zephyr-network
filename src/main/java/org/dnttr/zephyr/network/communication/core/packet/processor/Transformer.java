@@ -13,6 +13,7 @@ import org.dnttr.zephyr.network.communication.core.security.JSecurity;
 import org.dnttr.zephyr.network.communication.core.utilities.PacketUtils;
 import org.dnttr.zephyr.serializer.Serializer;
 
+import java.util.Arrays;
 import java.util.IdentityHashMap;
 
 /**
@@ -93,6 +94,7 @@ public class Transformer {
             case OUTBOUND -> {
                 if (message instanceof Packet packet) {
                     ByteBuf content = Serializer.serializeToBuffer(packet.getClass(), packet);
+
                     byte[] bytes = ByteBufUtil.getBytes(content);
 
                     ByteBuf result = processor.processOutbound(packet, context, bytes);
@@ -113,7 +115,9 @@ public class Transformer {
                     int versionId = packet.getData().protocol();
                     int packetId = packet.getData().identity();
 
-                    return new Carrier(versionId, packetId, hashSize, contentSize, buffer);
+                    Carrier carrier = new Carrier(versionId, packetId, hashSize, contentSize, buffer);
+
+                    return carrier;
                 } else {
                     throw new IllegalArgumentException("Outbound processing requires a Packet type, but received: " + message.getClass().getSimpleName());
                 }

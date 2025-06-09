@@ -11,7 +11,7 @@ import org.dnttr.zephyr.network.communication.core.utilities.PacketUtils;
  */
 
 @RequiredArgsConstructor
-public class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
+public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
 
     private final ChannelController controller;
 

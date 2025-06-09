@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.dnttr.zephyr.network.protocol.Constants;
 import org.dnttr.zephyr.network.protocol.Data;
 import org.dnttr.zephyr.network.protocol.Packet;
+import org.dnttr.zephyr.serializer.annotations.Map;
 import org.dnttr.zephyr.serializer.annotations.Serializable;
 
 /**
@@ -17,5 +18,6 @@ import org.dnttr.zephyr.serializer.annotations.Serializable;
 @Data(identity = -0x1, protocol = Constants.VER_1)
 public final class SessionKeyPacket extends Packet {
 
+    @Map(address = "key")
     private final byte[] key;
 }

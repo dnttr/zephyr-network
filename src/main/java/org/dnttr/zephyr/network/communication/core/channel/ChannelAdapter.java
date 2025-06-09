@@ -2,6 +2,8 @@ package org.dnttr.zephyr.network.communication.core.channel;
 
 import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +21,7 @@ public abstract class ChannelAdapter<I, O> extends ChannelInitializer<SocketChan
 
     @Override
     protected void initChannel(SocketChannel socketChannel) {
-        socketChannel.pipeline().addLast(new PacketEncoder(), new PacketDecoder(), new InboundAdapter(this), new OutboundAdapter(this));
+        socketChannel.pipeline().addLast(new LoggingHandler(LogLevel.INFO), new PacketEncoder(), new PacketDecoder(), new InboundAdapter(this), new OutboundAdapter(this));
     }
 
     protected abstract void channelRead(ChannelContext context, O input) throws Exception;

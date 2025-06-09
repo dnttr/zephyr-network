@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.dnttr.zephyr.network.protocol.Constants;
 import org.dnttr.zephyr.network.protocol.Data;
 import org.dnttr.zephyr.network.protocol.Packet;
+import org.dnttr.zephyr.serializer.annotations.Map;
 
 /**
  * @author dnttr
@@ -15,6 +16,7 @@ import org.dnttr.zephyr.network.protocol.Packet;
 @Data(identity = -0x3, protocol = Constants.VER_1)
 public final class SessionStatePacket extends Packet {
 
+    @Map(address = "state")
     private final int state;
 
     @Getter
