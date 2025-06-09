@@ -2,7 +2,11 @@ package org.dnttr.zephyr.network.communication.core.channel;
 
 import lombok.AccessLevel;
 import lombok.Getter;
+import org.dnttr.zephyr.event.EventBus;
 import org.dnttr.zephyr.network.communication.api.ISession;
+import org.dnttr.zephyr.network.communication.core.flow.events.PacketReceivedEvent;
+import org.dnttr.zephyr.network.communication.core.flow.events.PacketSentEvent;
+import org.dnttr.zephyr.network.communication.core.managers.ObserverManager;
 import org.dnttr.zephyr.network.communication.core.packet.Packet;
 import org.dnttr.zephyr.network.protocol.Data;
 import org.dnttr.zephyr.network.communication.core.packet.processor.Transformer;
@@ -20,13 +24,21 @@ public class ChannelController {
 
     private final ISession session;
 
+    @Getter(AccessLevel.PROTECTED)
+    private final EventBus eventBus;
+
+    @Getter(AccessLevel.PROTECTED)
+    private final ObserverManager observerManager;
+
     @Getter(AccessLevel.PACKAGE)
     private final Transformer transformer;
 
-    public ChannelController(ISession session) {
+    public ChannelController(ISession session, EventBus eventBus) {
         this.session = session;
+        this.eventBus = eventBus;
+        this.observerManager = new ObserverManager(eventBus);
 
-        transformer = new Transformer();
+        this.transformer = new Transformer();
     }
 
     @SafeVarargs
@@ -42,6 +54,7 @@ public class ChannelController {
             return;
         }
 
+        this.eventBus.call(new PacketReceivedEvent(msg, context));
         this.session.onRead(context.getConsumer(), msg);
     }
 
@@ -74,6 +87,7 @@ public class ChannelController {
             return;
         }
 
+        this.eventBus.call(new PacketSentEvent(msg, context));
         this.session.onWrite(context.getConsumer(), msg);
     }
 

@@ -30,7 +30,7 @@ public final class Server extends Worker {
     @Override
     protected void construct(ISession session) {
         ServerBootstrap bootstrap = new ServerBootstrap();
-        ServerChannelController controller = new ServerChannelController(session);
+        ServerChannelController controller = new ServerChannelController(session, eventBus);
         ChannelHandler handler = new ChannelHandler(controller);
 
         bootstrap.

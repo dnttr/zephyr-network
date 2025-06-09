@@ -3,7 +3,7 @@ package org.dnttr.zephyr.network.communication.core.codec;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
-import org.dnttr.zephyr.protocol.packet.Carrier;
+import org.dnttr.zephyr.network.communication.core.packet.Carrier;
 
 /**
  * @author dnttr
@@ -19,8 +19,8 @@ public class PacketEncoder extends MessageToByteEncoder<Carrier> {
 
         if (version == 0x1) {
             buffer.writeInt(carrier.identity());
-            buffer.writeInt(carrier.hash());
-            buffer.writeInt(carrier.content());
+            buffer.writeInt(carrier.hashSize());
+            buffer.writeInt(carrier.contentSize());
 
             buffer.writeBytes(carrier.buffer());
         } else {

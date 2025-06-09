@@ -1,11 +1,9 @@
 package org.dnttr.zephyr.network.communication.api.controllers;
 
+import org.dnttr.zephyr.event.EventBus;
 import org.dnttr.zephyr.network.communication.api.ISession;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelController;
-import org.dnttr.zephyr.protocol.packet.impl.SessionKeyPacket;
-import org.dnttr.zephyr.protocol.packet.impl.SessionSecretPacket;
-import org.dnttr.zephyr.protocol.packet.impl.SessionStatePacket;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -16,10 +14,10 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class ServerChannelController extends ChannelController {
 
-    public ServerChannelController(ISession session) {
-        super(session);
+    public ServerChannelController(ISession session, EventBus eventBus) {
+        super(session, eventBus);
 
-        this.addPackets(SessionStatePacket.class, SessionKeyPacket.class, SessionSecretPacket.class);
+        //this.addPackets(SessionStatePacket.class, SessionKeyPacket.class, SessionSecretPacket.class);
     }
 
     @Override

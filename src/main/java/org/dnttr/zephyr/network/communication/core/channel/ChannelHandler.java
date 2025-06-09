@@ -1,10 +1,11 @@
 package org.dnttr.zephyr.network.communication.core.channel;
 
 import lombok.RequiredArgsConstructor;
+import org.dnttr.zephyr.network.communication.core.packet.Packet;
+import org.dnttr.zephyr.network.communication.core.packet.Carrier;
+import org.dnttr.zephyr.network.communication.core.packet.processor.Direction;
 import org.dnttr.zephyr.network.communication.core.packet.processor.Transformer;
 import org.dnttr.zephyr.network.communication.core.utilities.PacketUtils;
-import org.dnttr.zephyr.protocol.packet.Carrier;
-import org.dnttr.zephyr.protocol.packet.Packet;
 
 /**
  * @author dnttr
@@ -17,7 +18,7 @@ public class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
 
     @Override
     protected void channelRead(ChannelContext context, Carrier input) throws Exception {
-        Packet packet = (Packet) this.controller.getTransformer().transform(Transformer.Type.INBOUND, input, context);
+        Packet packet = (Packet) this.controller.getTransformer().transform(Direction.INBOUND, input, context);
 
         if (packet == null) {
             context.restrict();
@@ -52,7 +53,7 @@ public class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
             this.controller.fireWrite(context, input);
         }
 
-        return (Carrier) this.controller.getTransformer().transform(Transformer.Type.OUTBOUND, input, context);
+        return (Carrier) this.controller.getTransformer().transform(Direction.OUTBOUND, input, context);
     }
 
     @Override

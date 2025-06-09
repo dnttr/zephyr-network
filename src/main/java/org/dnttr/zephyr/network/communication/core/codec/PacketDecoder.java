@@ -3,7 +3,7 @@ package org.dnttr.zephyr.network.communication.core.codec;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
-import org.dnttr.zephyr.protocol.packet.Carrier;
+import org.dnttr.zephyr.network.communication.core.packet.Carrier;
 import org.dnttr.zephyr.toolset.types.Type;
 
 import java.util.List;

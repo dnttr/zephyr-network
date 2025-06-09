@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.dnttr.zephyr.network.bridge.ZEKit;
 import org.dnttr.zephyr.network.communication.core.Consumer;
-import org.dnttr.zephyr.protocol.packet.Packet;
+import org.dnttr.zephyr.network.communication.core.packet.Packet;
 
 /**
  * @author dnttr
