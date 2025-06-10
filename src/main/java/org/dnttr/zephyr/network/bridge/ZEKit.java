@@ -115,7 +115,9 @@ public final class ZEKit {
 
     public static native void ffi_ze_build_derivable_key(long u);
 
-    public static native void ffi_ze_derive_key(long u);
+    public static native void ffi_ze_derive_hash_key(long u);
+
+    public static native void ffi_ze_derive_secret_key(long u, int m, byte[] k);
 
     public static native void ffi_ze_close();
 }
