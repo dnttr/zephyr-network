@@ -6,12 +6,14 @@ import org.dnttr.zephyr.network.protocol.Constants;
 import org.dnttr.zephyr.network.protocol.Data;
 import org.dnttr.zephyr.network.protocol.Packet;
 import org.dnttr.zephyr.serializer.annotations.Map;
+import org.dnttr.zephyr.serializer.annotations.Serializable;
 
 /**
  * @author dnttr
  */
 
 @Getter
+@Serializable
 @RequiredArgsConstructor
 @Data(identity = -0x3, protocol = Constants.VER_1)
 public final class SessionStatePacket extends Packet {
@@ -23,7 +25,7 @@ public final class SessionStatePacket extends Packet {
     @RequiredArgsConstructor
     public enum State {
 
-        AVAILABLE(0x0),
+        REGISTER_REQUEST(0x0),
         NOT_AVAILABLE(0x1),
         READY(0x2);
 

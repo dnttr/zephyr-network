@@ -27,11 +27,20 @@ public final class ClientChannelController extends ChannelController {
 
     @Override
     public void fireActive(@NotNull ChannelContext context) {
+        System.out.println("fireActive");
+        SessionStatePacket packet = new SessionStatePacket(SessionStatePacket.State.REGISTER_REQUEST.getValue());
+        context.getChannel().writeAndFlush(packet).addListener(future -> {
+            if (!future.isSuccess()) {
+                System.err.println("Failed to send packet: " + future.cause());
+            }
+        });
+
         super.fireActive(context);
     }
 
     @Override
     public void fireRead(@NotNull ChannelContext context, @NotNull Packet msg) {
+        System.out.println("fireRead");
         super.fireRead(context, msg);
     }
 }

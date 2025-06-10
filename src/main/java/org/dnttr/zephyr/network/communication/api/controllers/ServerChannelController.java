@@ -4,6 +4,7 @@ import org.dnttr.zephyr.event.EventBus;
 import org.dnttr.zephyr.network.communication.api.ISession;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelController;
+import org.dnttr.zephyr.network.protocol.Packet;
 import org.dnttr.zephyr.network.protocol.packets.SessionKeyPacket;
 import org.dnttr.zephyr.network.protocol.packets.SessionSecretPacket;
 import org.dnttr.zephyr.network.protocol.packets.SessionStatePacket;
@@ -25,13 +26,21 @@ public final class ServerChannelController extends ChannelController {
 
     @Override
     public void fireActive(@NotNull ChannelContext context) {
+        System.out.println("fireActive");
         super.fireActive(context);
+    }
 
-        byte[] x = new byte[2];
+    @Override
+    public void fireRead(@NotNull ChannelContext context, @NotNull Packet msg) {
+        System.out.println("fireRead");
+        System.out.println(msg);
 
-        x[0] = 1;
-        x[1] = 1;
+        super.fireRead(context, msg);
+    }
 
-        context.getChannel().writeAndFlush(new SessionKeyPacket(x));
+    @Override
+    public void fireWriteComplete(@NotNull ChannelContext context, @NotNull Packet msg) {
+        System.out.println("fireWriteComplete");
+        super.fireWriteComplete(context, msg);
     }
 }

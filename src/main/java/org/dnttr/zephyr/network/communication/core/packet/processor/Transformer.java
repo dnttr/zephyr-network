@@ -6,14 +6,13 @@ import io.netty.buffer.Unpooled;
 import lombok.Getter;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.packet.Carrier;
-import org.dnttr.zephyr.network.protocol.Packet;
 import org.dnttr.zephyr.network.communication.core.packet.processor.impl.SecureProcessor;
 import org.dnttr.zephyr.network.communication.core.packet.processor.impl.StandardProcessor;
 import org.dnttr.zephyr.network.communication.core.security.JSecurity;
 import org.dnttr.zephyr.network.communication.core.utilities.PacketUtils;
+import org.dnttr.zephyr.network.protocol.Packet;
 import org.dnttr.zephyr.serializer.Serializer;
 
-import java.util.Arrays;
 import java.util.IdentityHashMap;
 
 /**
@@ -108,6 +107,8 @@ public class Transformer {
                         buffer.writeBytes(mark);
                         hashSize = mark.length;
                     }
+
+                    System.out.println(hashSize);
 
                     buffer.writeBytes(result);
                     content.release();

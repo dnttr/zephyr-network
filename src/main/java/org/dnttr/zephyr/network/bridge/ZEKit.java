@@ -13,6 +13,7 @@ import org.jetbrains.annotations.ApiStatus;
  *
  * @author dnttr
  * @since 1.0.0
+ * @version 1.0.1-ZE
  */
 
 @ApiStatus.Internal
@@ -96,17 +97,25 @@ public final class ZEKit {
 
     public static native void ffi_ze_key(long u, int m);
 
-    public static native void ffi_ze_set_asymmetric_key(long u, int m, byte[] key);
+    public static native void ffi_ze_set_asymmetric_key(long u, int m, byte[] k);
 
-    public static native void ffi_ze_set_symmetric_key(long u, byte[] key);
+    public static native void ffi_ze_set_symmetric_key(long u, byte[] k);
 
-    public static native void ffi_ze_set_nonce(long u, int m, byte[] nonce);
+    public static native void ffi_ze_set_nonce(long u, int m, byte[] n);
 
     public static native byte[] ffi_ze_get_asymmetric_key(long u, int m);
 
     public static native byte[] ffi_ze_get_symmetric_key(long u);
 
     public static native byte[] ffi_ze_get_nonce(long u, int m);
+
+    public static native byte[] ffi_ze_build_hash(long u, byte[] b1);
+
+    public static native boolean ffi_ze_compare_hash(long u, byte[] b1, byte[] b2);
+
+    public static native void ffi_ze_build_derivable_key(long u);
+
+    public static native void ffi_ze_derive_key(long u);
 
     public static native void ffi_ze_close();
 }
