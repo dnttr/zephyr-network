@@ -35,6 +35,7 @@ public final class ChannelContext {
 
         this.encryptionType = ZEKit.Type.NONE;
         this.uuid = ZEKit.ffi_zm_open_session();
+        ZEKit.ffi_ze_build_derivable_key(this.uuid);
 
         this.consumer = new Consumer() {
             @Override

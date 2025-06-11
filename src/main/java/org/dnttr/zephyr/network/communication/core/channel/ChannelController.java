@@ -7,9 +7,9 @@ import org.dnttr.zephyr.network.communication.api.ISession;
 import org.dnttr.zephyr.network.communication.core.flow.events.packet.PacketReceivedEvent;
 import org.dnttr.zephyr.network.communication.core.flow.events.packet.PacketSentEvent;
 import org.dnttr.zephyr.network.communication.core.managers.ObserverManager;
-import org.dnttr.zephyr.network.protocol.Packet;
-import org.dnttr.zephyr.network.protocol.Data;
 import org.dnttr.zephyr.network.communication.core.packet.processor.Transformer;
+import org.dnttr.zephyr.network.protocol.Data;
+import org.dnttr.zephyr.network.protocol.Packet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,11 +50,12 @@ public class ChannelController {
     }
 
     public void fireRead(@NotNull ChannelContext context, @NotNull Packet msg) {
+        this.eventBus.call(new PacketReceivedEvent(msg, context));
+
         if (!context.isReady()) {
             return;
         }
 
-        this.eventBus.call(new PacketReceivedEvent(msg, context));
         this.session.onRead(context.getConsumer(), msg);
     }
 
@@ -83,11 +84,12 @@ public class ChannelController {
     }
 
     public void fireWrite(@NotNull ChannelContext context, @NotNull Packet msg) {
+        this.eventBus.call(new PacketSentEvent(msg, context));
+
         if (!context.isReady()) {
             return;
         }
 
-        this.eventBus.call(new PacketSentEvent(msg, context));
         this.session.onWrite(context.getConsumer(), msg);
     }
 

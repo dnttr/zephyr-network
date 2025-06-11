@@ -29,9 +29,16 @@ public class PacketDecoder extends ByteToMessageDecoder {
             int hash = buffer.readInt();
             int content = buffer.readInt();
 
-            if (hash <= 0 || content <= 0) {
+            if (content <= 0) {
                 ctx.channel().disconnect();
                 return;
+            }
+
+            if (hash <= 0) {
+                if (!(identity == -1 || identity == -2)) {
+                    ctx.channel().disconnect();
+                    return;
+                }
             }
 
             buffer.markReaderIndex();

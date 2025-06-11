@@ -8,7 +8,6 @@ import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.packet.Carrier;
 import org.dnttr.zephyr.network.communication.core.packet.processor.impl.SecureProcessor;
 import org.dnttr.zephyr.network.communication.core.packet.processor.impl.StandardProcessor;
-import org.dnttr.zephyr.network.communication.core.security.JSecurity;
 import org.dnttr.zephyr.network.communication.core.utilities.PacketUtils;
 import org.dnttr.zephyr.network.protocol.Packet;
 import org.dnttr.zephyr.serializer.Serializer;
@@ -27,52 +26,42 @@ public class Transformer {
     private final SecureProcessor secureProcessor;
     private final StandardProcessor standardProcessor;
 
-    private final JSecurity security;
-
     public Transformer() {
         this.packets = new IdentityHashMap<>();
 
         this.secureProcessor = new SecureProcessor();
         this.standardProcessor = new StandardProcessor();
-
-        this.security = new JSecurity();
     }
 
     public Object transform(Direction direction, Object message, ChannelContext context) throws Exception {
-        final boolean isProviderAvailable = this.security.isIntegrityProviderAvailable(context.getSecret());
-
         IProcessor processor;
 
         switch (context.getEncryptionType()) {
             case NONE -> processor = this.standardProcessor;
             case ASYMMETRIC, SYMMETRIC -> processor = this.secureProcessor;
-            default -> throw new IllegalArgumentException("Unrecognized encryption type: " + context.getEncryptionType());
+            default -> throw new IllegalArgumentException("Unrecognized cipher type: " + context.getEncryptionType());
         }
 
         switch (direction) {
             case INBOUND -> {
                 if (message instanceof Carrier carrier) {
-                    ByteBuf content = carrier.buffer();
+                    ByteBuf content;
 
-                    if (isProviderAvailable) {
+                    if (carrier.hashSize() != 0) {
                         var buffer = PacketUtils.decompose(carrier, carrier.hashSize());
 
                         if (buffer == null) {
                             return null;
                         }
 
-                        if (!this.security.isIntegrityPreserved(context.getSecret(), buffer)) {
+                        content = buffer.value();
+
+                        if (content == null) {
+                            context.restrict();
                             return null;
                         }
-
-                        content = buffer.value();
-                    } else if (carrier.hashSize() > 0) {
-                        return null;
-                    }
-
-                    if (content == null) {
-                        context.restrict();
-                        return null;
+                    } else {
+                        content = carrier.buffer();
                     }
 
                     byte[] bytes = ByteBufUtil.getBytes(content);
@@ -80,6 +69,7 @@ public class Transformer {
                     ByteBuf result = processor.processInbound(carrier, context, bytes);
 
                     var klass = this.packets.get(carrier.identity());
+
                     if (klass == null) {
                         return null;
                     }
@@ -93,7 +83,6 @@ public class Transformer {
             case OUTBOUND -> {
                 if (message instanceof Packet packet) {
                     ByteBuf content = Serializer.serializeToBuffer(packet.getClass(), packet);
-
                     byte[] bytes = ByteBufUtil.getBytes(content);
 
                     ByteBuf result = processor.processOutbound(packet, context, bytes);
@@ -101,16 +90,8 @@ public class Transformer {
                     int hashSize = 0, contentSize = result.readableBytes();
                     ByteBuf buffer = Unpooled.buffer();
 
-                    if (isProviderAvailable) {
-                        byte[] mark = this.security.getMark(context.getSecret(), result);
-
-                        buffer.writeBytes(mark);
-                        hashSize = mark.length;
-                    }
-
-                    System.out.println(hashSize);
-
                     buffer.writeBytes(result);
+
                     content.release();
 
                     int versionId = packet.getData().protocol();

@@ -1,12 +1,14 @@
+package network;
+
 import org.dnttr.zephyr.event.EventBus;
-import org.dnttr.zephyr.network.loader.api.client.Client;
+import org.dnttr.zephyr.network.loader.api.server.Server;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.net.InetSocketAddress;
 
-public class ClientTest {
+public class ServerTest {
 
     @BeforeAll
     public static void setUp() {
@@ -23,6 +25,6 @@ public class ClientTest {
 
     @Test
     public void init() {
-        new Client(new EventBus(), new InetSocketAddress(2137));
+        new Server(new EventBus(), new InetSocketAddress(2137));
     }
 }
