@@ -4,6 +4,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import lombok.Getter;
+import org.dnttr.zephyr.network.bridge.ZEKit;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.packet.Carrier;
 import org.dnttr.zephyr.network.communication.core.packet.processor.impl.SecureProcessor;
@@ -88,18 +89,33 @@ public class Transformer {
                     ByteBuf result = processor.processOutbound(packet, context, bytes);
 
                     int hashSize = 0, contentSize = result.readableBytes();
+
+                    int versionId = packet.getData().protocol();
+                    int packetId = packet.getData().identity();
+
+                    if (context.isHash()) {
+                        byte[] contentBytes = ByteBufUtil.getBytes(result);
+
+                        byte[] hashOut = ZEKit.ffi_ze_build_hash_sh0(context.getUuid(), contentBytes);
+                        hashSize = hashOut.length;
+                        ByteBuf hash = Unpooled.buffer(hashSize);
+                        hash.writeBytes(hashOut);
+
+                        ByteBuf buffer = Unpooled.buffer();
+                        buffer.writeBytes(contentBytes);
+
+                        contentSize = contentBytes.length;
+
+                        return new Carrier(versionId, packetId, hashSize, contentSize, hash, buffer);
+                    }
+
                     ByteBuf buffer = Unpooled.buffer();
 
                     buffer.writeBytes(result);
 
                     content.release();
 
-                    int versionId = packet.getData().protocol();
-                    int packetId = packet.getData().identity();
-
-                    Carrier carrier = new Carrier(versionId, packetId, hashSize, contentSize, buffer);
-
-                    return carrier;
+                    return new Carrier(versionId, packetId, hashSize, contentSize, null, buffer);
                 } else {
                     throw new IllegalArgumentException("Outbound processing requires a Packet type, but received: " + message.getClass().getSimpleName());
                 }

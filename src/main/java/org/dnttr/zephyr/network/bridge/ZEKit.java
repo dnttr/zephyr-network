@@ -32,92 +32,28 @@ public final class ZEKit {
         }
     }
 
-    /**
-     * Creates a new session.
-     */
-    public static native long ffi_zm_open_session();
-
-    /**
-     * Closes an existing session.
-     *
-     * @param u unique identifier for the session
-     */
-    public static native int ffi_zm_close_session(long u);
-
-    /**
-     * Encrypts a message in symmetric mode.
-     *
-     * @param u unique identifier for the session
-     * @param b1 buffer containing message to process
-     * @param b2 buffer containing aead
-     */
-    public static native byte[] ffi_ze_encrypt_symmetric(long u, byte[] b1, byte[] b2);
-
-    /**
-     * Decrypts a message in symmetric mode.
-     *
-     * @param u unique identifier for the session
-     * @param b1 buffer containing message to process
-     * @param b2 buffer containing aead
-     */
-    public static native byte[] ffi_ze_decrypt_symmetric(long u, byte[] b1, byte[] b2);
-
-    /**
-     * Encrypts a message in asymmetric mode.
-     *
-     * @param u unique identifier for the session
-     * @param b1 buffer containing message to process
-     */
-    public static native byte[] ffi_ze_encrypt_asymmetric(long u, byte[] b1);
-
-    /**
-     * Decrypts a message in asymmetric mode.
-     *
-     * @param u unique identifier for the session
-     * @param b1 buffer containing message to process
-     */
-    public static native byte[] ffi_ze_decrypt_asymmetric(long u, byte[] b1);
-
-
-    /**
-     * Generates a nonce for the session.
-     * It isn't necessary to call it every time you want to encrypt a message, however from security standpoint it is recommended to call it before each encryption operation.
-     * The nonce itself is stored on the native side.
-     * <br><br>
-     * Modes of operation:
-     * <br>
-     * 0 - generate nonce for asymmetric encryption
-     * <br>
-     * 1 - generate nonce for symmetric encryption
-     * <br>
-     * @param u unique identifier for the session
-     * @param m mode of operation
-     */
-    public static native void ffi_ze_nonce(long u, int m);
-
-    public static native void ffi_ze_key(long u, int m);
-
-    public static native void ffi_ze_set_asymmetric_key(long u, int m, byte[] k);
-
-    public static native void ffi_ze_set_symmetric_key(long u, byte[] k);
-
-    public static native void ffi_ze_set_nonce(long u, int m, byte[] n);
-
-    public static native byte[] ffi_ze_get_asymmetric_key(long u, int m);
-
-    public static native byte[] ffi_ze_get_symmetric_key(long u);
-
-    public static native byte[] ffi_ze_get_nonce(long u, int m);
-
-    public static native byte[] ffi_ze_build_hash(long u, byte[] b1);
-
-    public static native boolean ffi_ze_compare_hash(long u, byte[] b1, byte[] b2);
-
-    public static native void ffi_ze_build_derivable_key(long u);
-
-    public static native void ffi_ze_derive_hash_key(long u);
-
-    public static native void ffi_ze_derive_secret_key(long u, int m, byte[] k);
-
     public static native void ffi_ze_close();
+    public static native long ffi_zm_open_session();
+    public static native int ffi_zm_close_session(long uuid);
+    public static native byte[] ffi_ze_encrypt_symmetric(long uuid, byte[] messageBuffer, byte[] aeadBuffer);
+    public static native byte[] ffi_ze_decrypt_symmetric(long uuid, byte[] messageBuffer, byte[] aeadBuffer);
+    public static native byte[] ffi_ze_encrypt_asymmetric(long uuid, byte[] messageBuffer);
+    public static native byte[] ffi_ze_decrypt_asymmetric(long uuid, byte[] messageBuffer);
+    public static native void ffi_ze_nonce(long uuid, int mode);
+    public static native void ffi_ze_key(long uuid, int mode);
+    public static native void ffi_ze_set_symmetric_key(long uuid, byte[] keyBuffer);
+    public static native void ffi_ze_set_asymmetric_key(long uuid, int mode, byte[] keyBuffer);
+    public static native void ffi_ze_set_nonce(long uuid, int mode, byte[] nonceBuffer);
+    public static native byte[] ffi_ze_get_symmetric_key(long uuid);
+    public static native byte[] ffi_ze_get_asymmetric_key(long uuid, int mode);
+    public static native byte[] ffi_ze_get_nonce(long uuid, int mode);
+    public static native byte[] ffi_ze_build_hash_sh0(long uuid, byte[] messageBuffer);
+    public static native boolean ffi_ze_compare_hash_sh0(long uuid, byte[] hashBuffer, byte[] messageBuffer);
+    public static native void ffi_ze_build_base_key_sh0(long uuid);
+    public static native void ffi_ze_derive_keys_sh0(long uuid, int mode);
+    public static native void ffi_ze_derive_final_key_sh0(long uuid);
+    public static native byte[] ffi_ze_get_rv_public_key_sh0(long uuid);
+    public static native void ffi_ze_set_rv_public_key_sh0(long uuid, byte[] keyBuffer);
+    public static native byte[] ffi_ze_get_base_public_key_sh0(long uuid);
+    public static native void ffi_ze_set_asymmetric_received_key(long uuid, byte[] keyBuffer);
 }

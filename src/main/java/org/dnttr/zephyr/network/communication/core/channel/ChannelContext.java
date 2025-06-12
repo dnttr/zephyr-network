@@ -21,7 +21,6 @@ public final class ChannelContext {
 
     private final long uuid;
 
-    private byte[] secret;
     private byte[] nonce; //It is public so nobody cares about it
 
     private ZEKit.Type encryptionType;
@@ -29,13 +28,14 @@ public final class ChannelContext {
     @Setter(AccessLevel.NONE)
     private boolean restricted;
     private boolean ready;
+    private boolean hash;
 
     public ChannelContext(Channel channel) {
         this.channel = channel;
 
         this.encryptionType = ZEKit.Type.NONE;
         this.uuid = ZEKit.ffi_zm_open_session();
-        ZEKit.ffi_ze_build_derivable_key(this.uuid);
+        ZEKit.ffi_ze_build_base_key_sh0(this.uuid);
 
         this.consumer = new Consumer() {
             @Override

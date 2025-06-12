@@ -18,47 +18,53 @@ public class PacketDecoder extends ByteToMessageDecoder {
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf buffer, List<Object> objects) {
-        if (buffer.readableBytes() < requiredBytes) {
-            return;
-        }
+        while (buffer.readableBytes() >= requiredBytes) {
+            buffer.markReaderIndex();
 
-        int version = buffer.readInt();
+            int version = buffer.readInt();
 
-        if (version == 0x1) {
+            if (version != 0x1) {
+                ctx.channel().disconnect();
+                return;
+            }
+
+
             int identity = buffer.readInt();
             int hash = buffer.readInt();
             int content = buffer.readInt();
+
+            int totalPacketLength = hash + content;
 
             if (content <= 0) {
                 ctx.channel().disconnect();
                 return;
             }
 
-            if (hash <= 0) {
-                if (!(identity == -1 || identity == -2)) {
-                    ctx.channel().disconnect();
-                    return;
-                }
+            if (hash <= 0 && !(identity == -1 || identity == -2)) {
+                ctx.channel().disconnect();
+                return;
             }
 
-            buffer.markReaderIndex();
-
-            if (buffer.readableBytes() < hash + content) {
+            if (buffer.readableBytes() < totalPacketLength) {
                 buffer.resetReaderIndex();
                 return;
             }
 
-            buffer.discardReadBytes(); //i think it should be discarded. TODO: check this
-
             try {
-                objects.add(new Carrier(version, identity, hash, content, buffer.copy()));
-            } catch (Exception _) {
+                ByteBuf hashData = hash > 0 ? buffer.readBytes(hash) : null;
+                ByteBuf contentData = buffer.readBytes(content);
+
+                Carrier carrier = new Carrier(version, identity, hash, content, hashData, contentData);
+
+                if (hashData != null) {
+                    hashData.release();
+                }
+
+                objects.add(carrier);
+            } catch (Exception e) {
                 ctx.channel().disconnect();
-            } finally {
-                buffer.skipBytes(buffer.readableBytes());
+                return;
             }
-        } else {
-            ctx.channel().disconnect();
         }
     }
 }

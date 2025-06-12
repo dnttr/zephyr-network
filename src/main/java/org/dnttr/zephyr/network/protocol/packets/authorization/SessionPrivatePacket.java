@@ -13,7 +13,7 @@ import org.dnttr.zephyr.serializer.annotations.Serializable;
 
 @Getter
 @Serializable
-@Data(identity = -0x3, protocol = Constants.VER_1)
+@Data(identity = -0x4, protocol = Constants.VER_1)
 public final class SessionPrivatePacket extends Packet {
 
     @Address(address = "privateKey")

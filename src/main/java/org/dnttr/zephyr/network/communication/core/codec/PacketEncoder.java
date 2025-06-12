@@ -22,6 +22,10 @@ public class PacketEncoder extends MessageToByteEncoder<Carrier> {
             buffer.writeInt(carrier.hashSize());
             buffer.writeInt(carrier.contentSize());
 
+            if (carrier.hashSize() != 0) {
+                buffer.writeBytes(carrier.hash());
+            }
+
             buffer.writeBytes(carrier.buffer());
         } else {
             throw new IllegalStateException("Unsupported version " + version);

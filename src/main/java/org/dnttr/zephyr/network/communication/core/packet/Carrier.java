@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
  * @author dnttr
  */
 
-public record Carrier(int version, int identity, int hashSize, int contentSize, ByteBuf buffer) {
+public record Carrier(int version, int identity, int hashSize, int contentSize, ByteBuf hash, ByteBuf buffer) {
 
     @Override
     public @NotNull String toString() {

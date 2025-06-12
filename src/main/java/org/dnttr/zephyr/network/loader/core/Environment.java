@@ -11,7 +11,6 @@ public class Environment {
         try {
             this.worker.construct0();
         } catch (Exception ex) {
-            //add more robust error handling here, otherwise the IDE won't stop complaining
             ex.printStackTrace();
         } finally {
             this.worker.destroy();
