@@ -61,6 +61,13 @@ public class Transformer {
                             context.restrict();
                             return null;
                         }
+
+                        boolean isIntegrityPreserved = ZEKit.ffi_ze_compare_hash_sh0(context.getUuid(), ByteBufUtil.getBytes(buffer.key()), ByteBufUtil.getBytes(content));
+
+                        if (!isIntegrityPreserved) {
+                            context.restrict();
+                            return null;
+                        }
                     } else {
                         content = carrier.buffer();
                     }

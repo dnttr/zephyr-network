@@ -34,7 +34,13 @@ public final class ClientChannelController extends ChannelController {
         Observer auth = this.getObserverManager().observe(SessionPublicPacket.class, Direction.INBOUND, context);
         auth.accept(msg0 -> {
             SessionPublicPacket serverAuthKey = (SessionPublicPacket) msg0;
+            ZEKit.ffi_ze_nonce(context.getUuid(), ZEKit.Type.ASYMMETRIC.getValue());
+            ZEKit.ffi_ze_key(context.getUuid(), ZEKit.Type.ASYMMETRIC.getValue());
             ZEKit.ffi_ze_set_asymmetric_received_key(context.getUuid(), serverAuthKey.getPublicKey());
+
+            byte[] clientAuthKey = ZEKit.ffi_ze_get_asymmetric_key(context.getUuid(), 0);
+            SessionPublicPacket clientAuthKeyPacket = new SessionPublicPacket(clientAuthKey);
+            context.getChannel().writeAndFlush(clientAuthKeyPacket);
 
             Observer hash = this.getObserverManager().observe(SessionPublicPacket.class, Direction.INBOUND, context);
             hash.accept(msg1 -> {
@@ -47,7 +53,15 @@ public final class ClientChannelController extends ChannelController {
                 ZEKit.ffi_ze_derive_keys_sh0(context.getUuid(), 1);
                 ZEKit.ffi_ze_derive_final_key_sh0(context.getUuid());
 
-                context.setHash(true);
+                Observer observer = this.getObserverManager().observe(SessionStatePacket.class, Direction.INBOUND, context);
+                observer.accept(msg2 -> {
+                    Observer xt =  this.getObserverManager().observe(SessionStatePacket.class, Direction.OUTBOUND, context);
+                    context.getChannel().writeAndFlush(new SessionStatePacket(SessionStatePacket.State.REGISTER_RESPONSE.getValue()));
+
+                    xt.accept(msg3 -> {
+                        context.setHash(true);
+                    });
+                });
             });
         });
 

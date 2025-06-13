@@ -32,8 +32,7 @@ public class SessionStatePacket extends Packet {
     public enum State {
 
         REGISTER_REQUEST(0x0),
-        NOT_AVAILABLE(0x1),
-        READY(0x2);
+        REGISTER_RESPONSE(0x1);
 
         private final int value;
 
