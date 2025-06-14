@@ -1,12 +1,9 @@
 package org.dnttr.zephyr.network.communication.core.packet.processor.impl;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import org.dnttr.zephyr.network.bridge.ZEKit;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
-import org.dnttr.zephyr.network.communication.core.packet.Carrier;
-import org.dnttr.zephyr.network.protocol.Packet;
 import org.dnttr.zephyr.network.communication.core.packet.processor.IProcessor;
+import org.dnttr.zephyr.network.protocol.Packet;
 
 import static org.dnttr.zephyr.network.bridge.ZEKit.Type.ASYMMETRIC;
 import static org.dnttr.zephyr.network.bridge.ZEKit.Type.SYMMETRIC;
@@ -18,7 +15,7 @@ import static org.dnttr.zephyr.network.bridge.ZEKit.Type.SYMMETRIC;
 public class SecureProcessor implements IProcessor {
 
     @Override
-    public ByteBuf processInbound(Carrier message, ChannelContext context, byte[] content) {
+    public byte[] processInbound(ChannelContext context, byte[] content) {
         if (context.getNonce() == null) {
             return null;
         }
@@ -39,11 +36,11 @@ public class SecureProcessor implements IProcessor {
             default -> throw new IllegalArgumentException("(Inbound) Unsupported encryption type: " + context.getEncryptionType());
         }
 
-        return Unpooled.wrappedBuffer(decryptedContent);
+        return decryptedContent;
     }
 
     @Override
-    public ByteBuf processOutbound(Packet message, ChannelContext context, byte[] bytes) {
+    public byte[] processOutbound(Packet message, ChannelContext context, byte[] bytes) {
         byte[] encryptedContent;
 
         switch (context.getEncryptionType()) {
@@ -60,6 +57,6 @@ public class SecureProcessor implements IProcessor {
             default -> throw new IllegalArgumentException("(Outbound) Unsupported encryption type: " + context.getEncryptionType());
         }
 
-        return Unpooled.wrappedBuffer(encryptedContent);
+        return encryptedContent;
     }
 }

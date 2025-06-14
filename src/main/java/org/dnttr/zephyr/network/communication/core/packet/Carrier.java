@@ -1,13 +1,12 @@
 package org.dnttr.zephyr.network.communication.core.packet;
 
-import io.netty.buffer.ByteBuf;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dnttr
  */
 
-public record Carrier(int version, int identity, int hashSize, int contentSize, ByteBuf hash, ByteBuf buffer) {
+public record Carrier(int version, int identity, int hashSize, int contentSize, byte[] hash, byte[] content) {
 
     @Override
     public @NotNull String toString() {

@@ -15,6 +15,8 @@ import org.dnttr.zephyr.network.protocol.packets.authorization.SessionPrivatePac
 import org.dnttr.zephyr.network.protocol.packets.authorization.SessionPublicPacket;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
 /**
  * ClientChannelController is responsible for managing the client-side channel operations.
  * It extends the ChannelController and initializes with specific session packets.
@@ -55,14 +57,17 @@ public final class ClientChannelController extends ChannelController {
                 byte[] clientKey = ZEKit.ffi_ze_get_base_public_key_sh0(context.getUuid());
 
                 ZEKit.ffi_ze_derive_keys_sh0(context.getUuid(), 1);
-                ZEKit.ffi_ze_derive_final_key_sh0(context.getUuid());
+                ZEKit.ffi_ze_derive_final_key_sh0(context.getUuid(), 1);
 
                 Observer otx = this.getObserverManager().observe(SessionPublicPacket.class, Direction.OUTBOUND, context);
                 otx.thenAccept(_ -> {
                     context.setHash(true);
 
-                    ZEKit.ffi_ze_key(context.getUuid(), ZEKit.Type.SYMMETRIC.getValue());
-                    byte[] bytes = ZEKit.ffi_ze_get_exchange_message(context.getUuid());
+                    Observer privatePacket = this.getObserverManager().observe(SessionPrivatePacket.class, Direction.INBOUND, context);
+                    privatePacket.thenAccept(packet -> {
+                        SessionPrivatePacket sessionPrivatePacket = (SessionPrivatePacket) packet;
+                        System.out.println(Arrays.toString(sessionPrivatePacket.getKey()));
+                    });
                 });
 
                 context.getChannel().writeAndFlush(new SessionPublicPacket(clientKey));

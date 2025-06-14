@@ -1,7 +1,5 @@
 package org.dnttr.zephyr.network.communication.core.packet.processor;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import lombok.Getter;
 import org.dnttr.zephyr.network.bridge.ZEKit;
@@ -9,7 +7,6 @@ import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.packet.Carrier;
 import org.dnttr.zephyr.network.communication.core.packet.processor.impl.SecureProcessor;
 import org.dnttr.zephyr.network.communication.core.packet.processor.impl.StandardProcessor;
-import org.dnttr.zephyr.network.communication.core.utilities.PacketUtils;
 import org.dnttr.zephyr.network.protocol.Packet;
 import org.dnttr.zephyr.serializer.Serializer;
 
@@ -46,43 +43,28 @@ public class Transformer {
         switch (direction) {
             case INBOUND -> {
                 if (message instanceof Carrier carrier) {
-                    ByteBuf content;
-
                     if (carrier.hashSize() != 0 && context.isHash()) {
-                        var buffer = PacketUtils.decompose(carrier, carrier.hashSize());
-
-                        if (buffer == null) {
-                            return null;
-                        }
-
-                        content = buffer.value();
-
-                        if (content == null) {
+                        if (carrier.hash() == null || carrier.content() == null) {
                             context.restrict();
                             return null;
                         }
 
-                        boolean isIntegrityPreserved = ZEKit.ffi_ze_compare_hash_sh0(context.getUuid(), ByteBufUtil.getBytes(buffer.key()), ByteBufUtil.getBytes(content));
+                        boolean isIntegrityPreserved = ZEKit.ffi_ze_compare_hash_sh0(context.getUuid(), carrier.hash(), carrier.content());
 
                         if (!isIntegrityPreserved) {
                             context.restrict();
                             return null;
                         }
-                    } else {
-                        content = carrier.buffer();
                     }
 
-                    byte[] bytes = ByteBufUtil.getBytes(content);
-
-                    ByteBuf result = processor.processInbound(carrier, context, bytes);
-
+                    byte[] result = processor.processInbound(context, carrier.content());
                     var klass = this.packets.get(carrier.identity());
 
                     if (klass == null) {
                         return null;
                     }
 
-                    return Serializer.deserializeUsingBuffer(klass, result);
+                    return Serializer.deserializeUsingBuffer(klass, Unpooled.wrappedBuffer(result));
                 } else {
                     throw new IllegalArgumentException("Inbound processing requires a Carrier message, but received: " + message.getClass().getSimpleName());
                 }
@@ -90,40 +72,19 @@ public class Transformer {
 
             case OUTBOUND -> {
                 if (message instanceof Packet packet) {
-                    ByteBuf content = Serializer.serializeToBuffer(packet.getClass(), packet);
-                    byte[] bytes = ByteBufUtil.getBytes(content);
-
-                    ByteBuf result = processor.processOutbound(packet, context, bytes);
-
-                    int hashSize = 0, contentSize = result.readableBytes();
+                    byte[] serializedPacket = Serializer.serializeToArray(packet.getClass(), packet);
+                    byte[] processedPacket = processor.processOutbound(packet, context, serializedPacket);
 
                     int versionId = packet.getData().protocol();
                     int packetId = packet.getData().identity();
 
                     if (context.isHash()) {
-                        byte[] contentBytes = ByteBufUtil.getBytes(result);
+                        byte[] computedHash = ZEKit.ffi_ze_build_hash_sh0(context.getUuid(), processedPacket);
 
-                        System.out.println(packet.getData().identity());
-                        byte[] hashOut = ZEKit.ffi_ze_build_hash_sh0(context.getUuid(), contentBytes);
-                        hashSize = hashOut.length;
-                        ByteBuf hash = Unpooled.buffer(hashSize);
-                        hash.writeBytes(hashOut);
-
-                        ByteBuf buffer = Unpooled.buffer();
-                        buffer.writeBytes(contentBytes);
-
-                        contentSize = contentBytes.length;
-
-                        return new Carrier(versionId, packetId, hashSize, contentSize, hash, buffer);
+                        return new Carrier(versionId, packetId, computedHash.length, processedPacket.length, computedHash, processedPacket);
                     }
 
-                    ByteBuf buffer = Unpooled.buffer();
-
-                    buffer.writeBytes(result);
-
-                    content.release();
-
-                    return new Carrier(versionId, packetId, hashSize, contentSize, null, buffer);
+                    return new Carrier(versionId, packetId, 0, processedPacket.length, null, processedPacket);
                 } else {
                     throw new IllegalArgumentException("Outbound processing requires a Packet type, but received: " + message.getClass().getSimpleName());
                 }

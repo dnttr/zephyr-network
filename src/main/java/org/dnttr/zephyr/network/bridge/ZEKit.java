@@ -51,7 +51,7 @@ public final class ZEKit {
     public static native boolean ffi_ze_compare_hash_sh0(long uuid, byte[] hashBuffer, byte[] messageBuffer);
     public static native void ffi_ze_build_base_key_sh0(long uuid);
     public static native void ffi_ze_derive_keys_sh0(long uuid, int mode);
-    public static native void ffi_ze_derive_final_key_sh0(long uuid);
+    public static native void ffi_ze_derive_final_key_sh0(long uuid, int mode);
     public static native byte[] ffi_ze_get_rv_public_key_sh0(long uuid);
     public static native void ffi_ze_set_rv_public_key_sh0(long uuid, byte[] keyBuffer);
     public static native byte[] ffi_ze_get_base_public_key_sh0(long uuid);

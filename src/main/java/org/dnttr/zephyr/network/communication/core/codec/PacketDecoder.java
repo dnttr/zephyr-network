@@ -1,6 +1,7 @@
 package org.dnttr.zephyr.network.communication.core.codec;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import org.dnttr.zephyr.network.communication.core.packet.Carrier;
@@ -51,14 +52,13 @@ public class PacketDecoder extends ByteToMessageDecoder {
             }
 
             try {
-                ByteBuf hashData = hash > 0 ? buffer.readBytes(hash) : null;
-                ByteBuf contentData = buffer.readBytes(content);
+                ByteBuf hashBuffer = hash > 0 ? buffer.readBytes(hash) : null;
+                ByteBuf contentBuffer = buffer.readBytes(content);
 
-                Carrier carrier = new Carrier(version, identity, hash, content, hashData, contentData);
+                byte[] hashData = hashBuffer != null ? ByteBufUtil.getBytes(hashBuffer) : null;
+                byte[] contentData = ByteBufUtil.getBytes(contentBuffer);
 
-                if (hashData != null) {
-                    hashData.release();
-                }
+                Carrier carrier = new Carrier(version, identity, hash, content, hashData,  contentData);
 
                 objects.add(carrier);
             } catch (Exception e) {

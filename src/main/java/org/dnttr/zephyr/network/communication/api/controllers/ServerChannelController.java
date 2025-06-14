@@ -33,7 +33,7 @@ public final class ServerChannelController extends ChannelController {
     @Override
     public void fireActive(@NotNull ChannelContext context) {
         Observer observer = this.getObserverManager().observe(SessionStatePacket.class, Direction.INBOUND, context);
-        observer.accept(message -> {
+        observer.thenAccept(message -> {
             SessionStatePacket packet = (SessionStatePacket) message;
 
             if (State.from(packet.getState()) == State.REGISTER_REQUEST) {
@@ -44,7 +44,7 @@ public final class ServerChannelController extends ChannelController {
 
                 context.getChannel().writeAndFlush(publicAuthPacket);
                 Observer ox = this.getObserverManager().observe(SessionPublicPacket.class, Direction.INBOUND, context);
-                ox.accept(msg1 -> {
+                ox.thenAccept(msg1 -> {
                     SessionPublicPacket packet1 = (SessionPublicPacket) msg1;
                     ZEKit.ffi_ze_set_asymmetric_received_key(context.getUuid(), packet1.getPublicKey());
 
@@ -53,14 +53,21 @@ public final class ServerChannelController extends ChannelController {
                     SessionPublicPacket publicHashPacket = new SessionPublicPacket(ZEKit.ffi_ze_get_base_public_key_sh0(context.getUuid()));
                     context.getChannel().writeAndFlush(publicHashPacket);
 
-                    hash.accept(msg2 -> {
+                    hash.thenAccept(msg2 -> {
                         SessionPublicPacket packet2 = (SessionPublicPacket) msg2;
 
                         ZEKit.ffi_ze_set_rv_public_key_sh0(context.getUuid(), packet2.getPublicKey());
                         ZEKit.ffi_ze_derive_keys_sh0(context.getUuid(), 0);
-                        ZEKit.ffi_ze_derive_final_key_sh0(context.getUuid());
+                        ZEKit.ffi_ze_derive_final_key_sh0(context.getUuid(), 0);
 
                         context.setHash(true);
+
+                        System.out.println("x");
+                        ZEKit.ffi_ze_key(context.getUuid(), ZEKit.Type.SYMMETRIC.getValue());
+                        byte[] bytes = ZEKit.ffi_ze_get_exchange_message(context.getUuid());
+                        SessionPrivatePacket privatePacket = new SessionPrivatePacket(bytes);
+
+                        context.getChannel().writeAndFlush(privatePacket);
                     });
                 });
             } else {

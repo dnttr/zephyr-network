@@ -26,11 +26,9 @@ public class PacketEncoder extends MessageToByteEncoder<Carrier> {
                 buffer.writeBytes(carrier.hash());
             }
 
-            buffer.writeBytes(carrier.buffer());
+            buffer.writeBytes(carrier.content());
         } else {
             throw new IllegalStateException("Unsupported version " + version);
         }
-
-        carrier.buffer().release();
     }
 }
