@@ -61,4 +61,13 @@ public class ObserverManager {
             }
         }
     }
+
+    public int getObserversCount(Class<? extends Packet> klass, Direction direction) {
+        List<Observer> observersList = observers.get(klass);
+        if (observersList == null) {
+            return 0;
+        }
+
+        return observersList.size();
+    }
 }

@@ -6,6 +6,7 @@ import org.dnttr.zephyr.network.communication.api.ISession;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelController;
 import org.dnttr.zephyr.network.communication.core.flow.Observer;
+import org.dnttr.zephyr.network.communication.core.flow.events.channel.ConnectionEstablishedEvent;
 import org.dnttr.zephyr.network.communication.core.packet.processor.Direction;
 import org.dnttr.zephyr.network.protocol.Packet;
 import org.dnttr.zephyr.network.protocol.packets.SessionStatePacket;
@@ -27,12 +28,16 @@ public final class ClientChannelController extends ChannelController {
         super(session, eventBus);
 
         this.addPackets(SessionStatePacket.class, SessionPrivatePacket.class, SessionPublicPacket.class, SessionNoncePacket.class);
+
+        this.getEventBus().register(this);
     }
 
     @Override
     public void fireActive(@NotNull ChannelContext context) {
+        this.getEventBus().call(new ConnectionEstablishedEvent(context));
+
         Observer auth = this.getObserverManager().observe(SessionPublicPacket.class, Direction.INBOUND, context);
-        auth.accept(msg0 -> {
+        auth.thenAccept(msg0 -> {
             SessionPublicPacket serverAuthKey = (SessionPublicPacket) msg0;
             ZEKit.ffi_ze_nonce(context.getUuid(), ZEKit.Type.ASYMMETRIC.getValue());
             ZEKit.ffi_ze_key(context.getUuid(), ZEKit.Type.ASYMMETRIC.getValue());
@@ -43,25 +48,24 @@ public final class ClientChannelController extends ChannelController {
             context.getChannel().writeAndFlush(clientAuthKeyPacket);
 
             Observer hash = this.getObserverManager().observe(SessionPublicPacket.class, Direction.INBOUND, context);
-            hash.accept(msg1 -> {
+            hash.thenAccept(msg1 -> {
                 SessionPublicPacket serverHashKey = (SessionPublicPacket) msg1;
                 ZEKit.ffi_ze_set_rv_public_key_sh0(context.getUuid(), serverHashKey.getPublicKey());
 
                 byte[] clientKey = ZEKit.ffi_ze_get_base_public_key_sh0(context.getUuid());
-                context.getChannel().writeAndFlush(new SessionPublicPacket(clientKey));
 
                 ZEKit.ffi_ze_derive_keys_sh0(context.getUuid(), 1);
                 ZEKit.ffi_ze_derive_final_key_sh0(context.getUuid());
 
-                Observer observer = this.getObserverManager().observe(SessionStatePacket.class, Direction.INBOUND, context);
-                observer.accept(msg2 -> {
-                    Observer xt =  this.getObserverManager().observe(SessionStatePacket.class, Direction.OUTBOUND, context);
-                    context.getChannel().writeAndFlush(new SessionStatePacket(SessionStatePacket.State.REGISTER_RESPONSE.getValue()));
+                Observer otx = this.getObserverManager().observe(SessionPublicPacket.class, Direction.OUTBOUND, context);
+                otx.thenAccept(_ -> {
+                    context.setHash(true);
 
-                    xt.accept(msg3 -> {
-                        context.setHash(true);
-                    });
+                    ZEKit.ffi_ze_key(context.getUuid(), ZEKit.Type.SYMMETRIC.getValue());
+                    byte[] bytes = ZEKit.ffi_ze_get_exchange_message(context.getUuid());
                 });
+
+                context.getChannel().writeAndFlush(new SessionPublicPacket(clientKey));
             });
         });
 
@@ -69,6 +73,9 @@ public final class ClientChannelController extends ChannelController {
         context.getChannel().writeAndFlush(packet);
 
         super.fireActive(context);
+    }
+
+    private void continueAuth(@NotNull ChannelContext context) {
     }
 
     @Override

@@ -1,6 +1,9 @@
 package org.dnttr.zephyr.network.communication.core.channel;
 
 import lombok.RequiredArgsConstructor;
+import org.dnttr.zephyr.event.EventBus;
+import org.dnttr.zephyr.network.communication.core.flow.events.packet.PacketReceivedEvent;
+import org.dnttr.zephyr.network.communication.core.flow.events.packet.PacketSentEvent;
 import org.dnttr.zephyr.network.protocol.Packet;
 import org.dnttr.zephyr.network.communication.core.packet.Carrier;
 import org.dnttr.zephyr.network.communication.core.packet.processor.Direction;
@@ -13,6 +16,7 @@ import org.dnttr.zephyr.network.communication.core.utilities.PacketUtils;
 @RequiredArgsConstructor
 public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
 
+    private final EventBus eventBus;
     private final ChannelController controller;
 
     @Override
@@ -23,6 +27,8 @@ public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
             context.restrict();
             return;
         }
+
+        this.eventBus.call(new PacketReceivedEvent(packet, context));
 
         this.controller.fireRead(context, packet);
     }
@@ -52,7 +58,10 @@ public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
             this.controller.fireWrite(context, input);
         }
 
-        return (Carrier) this.controller.getTransformer().transform(Direction.OUTBOUND, input, context);
+        Carrier carrier = (Carrier) this.controller.getTransformer().transform(Direction.OUTBOUND, input, context);
+        this.eventBus.call(new PacketSentEvent(input, context));
+
+        return carrier;
     }
 
     @Override

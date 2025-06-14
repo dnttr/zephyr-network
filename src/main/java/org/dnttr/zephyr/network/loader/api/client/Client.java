@@ -31,7 +31,7 @@ public class Client extends Worker {
                 group(this.boss).
                 channel(NioSocketChannel.class).
                 option(ChannelOption.SO_KEEPALIVE, true).
-                handler(new ChannelHandler(new ClientChannelController(session, eventBus)));
+                handler(new ChannelHandler(this.eventBus, new ClientChannelController(session, eventBus)));
 
         ChannelFuture channelFuture = bootstrap.connect(getAddress()).sync();
         channelFuture.channel().closeFuture().sync();

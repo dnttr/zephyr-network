@@ -31,7 +31,7 @@ public final class Server extends Worker {
     protected void construct(ISession session) {
         ServerBootstrap bootstrap = new ServerBootstrap();
         ServerChannelController controller = new ServerChannelController(session, eventBus);
-        ChannelHandler handler = new ChannelHandler(controller);
+        ChannelHandler handler = new ChannelHandler(eventBus, controller);
 
         bootstrap.
                 group(this.boss, child).

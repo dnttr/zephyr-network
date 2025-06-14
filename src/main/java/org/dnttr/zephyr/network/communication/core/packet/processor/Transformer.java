@@ -48,7 +48,7 @@ public class Transformer {
                 if (message instanceof Carrier carrier) {
                     ByteBuf content;
 
-                    if (carrier.hashSize() != 0) {
+                    if (carrier.hashSize() != 0 && context.isHash()) {
                         var buffer = PacketUtils.decompose(carrier, carrier.hashSize());
 
                         if (buffer == null) {
@@ -103,6 +103,7 @@ public class Transformer {
                     if (context.isHash()) {
                         byte[] contentBytes = ByteBufUtil.getBytes(result);
 
+                        System.out.println(packet.getData().identity());
                         byte[] hashOut = ZEKit.ffi_ze_build_hash_sh0(context.getUuid(), contentBytes);
                         hashSize = hashOut.length;
                         ByteBuf hash = Unpooled.buffer(hashSize);

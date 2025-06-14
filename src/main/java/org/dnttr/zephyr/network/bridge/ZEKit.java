@@ -56,4 +56,6 @@ public final class ZEKit {
     public static native void ffi_ze_set_rv_public_key_sh0(long uuid, byte[] keyBuffer);
     public static native byte[] ffi_ze_get_base_public_key_sh0(long uuid);
     public static native void ffi_ze_set_asymmetric_received_key(long uuid, byte[] keyBuffer);
+    public static native byte[] ffi_ze_get_exchange_message(long uuid);
+    public static native void ffi_ze_set_exchange_message(long uuid, byte[] messageBuffer);
 }

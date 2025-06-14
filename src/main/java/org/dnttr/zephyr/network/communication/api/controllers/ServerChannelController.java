@@ -60,17 +60,7 @@ public final class ServerChannelController extends ChannelController {
                         ZEKit.ffi_ze_derive_keys_sh0(context.getUuid(), 0);
                         ZEKit.ffi_ze_derive_final_key_sh0(context.getUuid());
 
-                        SessionStatePacket packet3 = new SessionStatePacket(State.REGISTER_RESPONSE.getValue());
-                        context.getChannel().writeAndFlush(packet3);
-
-                        Observer xt = this.getObserverManager().observe(SessionStatePacket.class, Direction.INBOUND, context);
-                        xt.accept(msg3 -> {
-                            SessionStatePacket packet4 = (SessionStatePacket) msg3;
-
-                            if (State.from(packet4.getState()) == State.REGISTER_RESPONSE) {
-                                context.setHash(true);
-                            }
-                        });
+                        context.setHash(true);
                     });
                 });
             } else {
@@ -79,6 +69,17 @@ public final class ServerChannelController extends ChannelController {
         });
         super.fireActive(context);
     }
+
+    /*
+    SessionStatePacket packet3 = new SessionStatePacket(State.REGISTER_RESPONSE.getValue());
+                        context.getChannel().writeAndFlush(packet3);
+
+              System.out.println(context.isHash());
+                            byte[] nonce = ZEKit.ffi_ze_get_nonce(context.getUuid(), ZEKit.Type.ASYMMETRIC.getValue());
+                            System.out.println(Arrays.toString(nonce));
+                            SessionNoncePacket noncePacket = new SessionNoncePacket(ZEKit.Type.ASYMMETRIC.getValue(), nonce);
+                            context.getChannel().writeAndFlush(noncePacket);
+     */
 
     /*
      *    byte[] nonce = ZEKit.ffi_ze_get_nonce(context.getUuid(), ZEKit.Type.ASYMMETRIC.getValue());

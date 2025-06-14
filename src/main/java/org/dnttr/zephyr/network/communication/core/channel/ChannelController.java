@@ -50,8 +50,6 @@ public class ChannelController {
     }
 
     public void fireRead(@NotNull ChannelContext context, @NotNull Packet msg) {
-        this.eventBus.call(new PacketReceivedEvent(msg, context));
-
         if (!context.isReady()) {
             return;
         }
@@ -84,8 +82,6 @@ public class ChannelController {
     }
 
     public void fireWrite(@NotNull ChannelContext context, @NotNull Packet msg) {
-        this.eventBus.call(new PacketSentEvent(msg, context));
-
         if (!context.isReady()) {
             return;
         }
