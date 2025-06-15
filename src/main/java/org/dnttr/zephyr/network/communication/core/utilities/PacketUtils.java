@@ -4,7 +4,7 @@ package org.dnttr.zephyr.network.communication.core.utilities;
  * @author dnttr
  */
 
-public class PacketUtils {
+public final class PacketUtils {
 
     /**
      * Checks if the given packet is a reserved.

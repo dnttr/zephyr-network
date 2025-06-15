@@ -8,7 +8,7 @@ import java.util.HashMap;
  * @author dnttr
  */
 
-public class ContextRegistry {
+public final class ContextRegistry {
 
     private final HashMap<String, ChannelContext> contexts = new HashMap<>();
 
