@@ -2,7 +2,6 @@ package org.dnttr.zephyr.network.communication.core.packet.processor;
 
 import io.netty.buffer.Unpooled;
 import lombok.Getter;
-import org.dnttr.zephyr.network.bridge.internal.ZEKit;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.packet.Carrier;
 import org.dnttr.zephyr.network.communication.core.packet.processor.impl.SecureProcessor;
@@ -24,11 +23,15 @@ public class Transformer {
     private final SecureProcessor secureProcessor;
     private final StandardProcessor standardProcessor;
 
+    private final Integrity integrity;
+
     public Transformer() {
         this.packets = new IdentityHashMap<>();
 
         this.secureProcessor = new SecureProcessor();
         this.standardProcessor = new StandardProcessor();
+
+        this.integrity = new Integrity();
     }
 
     public Object transform(Direction direction, Object message, ChannelContext context) throws Exception {
@@ -44,36 +47,21 @@ public class Transformer {
             case INBOUND -> {
                 if (message instanceof Carrier carrier) {
                     int packetId = carrier.identity();
+                    byte[] result = carrier.content();
 
                     if (carrier.hashSize() != 0 && context.isHash()) {
-                        if (carrier.hash() == null || carrier.content() == null) {
-                            context.restrict();
-                            return null;
-                        }
-
-                        boolean isIntegrityPreserved = ZEKit.ffi_ze_compare_hash_sh0(context.getUuid(), carrier.hash(), carrier.content());
-
-                        if (!isIntegrityPreserved) {
-                            context.restrict();
+                        if (!this.integrity.verify(context, carrier)) {
                             return null;
                         }
                     }
 
-                    byte[] result;
-
                     if (packetId != -0x3) {
                         result = processor.processInbound(context, carrier.content());
-                    } else {
-                        result = carrier.content();
                     }
 
                     var klass = this.packets.get(carrier.identity());
 
-                    if (klass == null) {
-                        return null;
-                    }
-
-                    if (result == null) {
+                    if (result == null || klass == null) {
                         return null;
                     }
 
@@ -92,18 +80,14 @@ public class Transformer {
                     int packetId = packet.getData().identity();
 
                     if (packetId != -0x3) {
-                        processedPacket = processor.processOutbound(packet, context, serializedPacket);
+                        processedPacket = processor.processOutbound(context, serializedPacket);
                     } else {
                         processedPacket = serializedPacket;
                     }
 
-                    if (context.isHash()) {
-                        byte[] computedHash = ZEKit.ffi_ze_build_hash_sh0(context.getUuid(), processedPacket);
+                    byte[] computedHash = this.integrity.build(context, processedPacket);
 
-                        return new Carrier(versionId, packetId, computedHash.length, processedPacket.length, computedHash, processedPacket);
-                    }
-
-                    return new Carrier(versionId, packetId, 0, processedPacket.length, null, processedPacket);
+                    return new Carrier(versionId, packetId, computedHash.length, processedPacket.length, computedHash, processedPacket);
                 } else {
                     throw new IllegalArgumentException("Outbound processing requires a Packet type, but received: " + message.getClass().getSimpleName());
                 }

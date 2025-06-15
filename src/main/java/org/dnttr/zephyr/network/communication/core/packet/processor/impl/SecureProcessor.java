@@ -3,7 +3,6 @@ package org.dnttr.zephyr.network.communication.core.packet.processor.impl;
 import org.dnttr.zephyr.network.bridge.Security;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.packet.processor.IProcessor;
-import org.dnttr.zephyr.network.protocol.Packet;
 
 import java.util.Optional;
 
@@ -36,7 +35,7 @@ public class SecureProcessor implements IProcessor {
     }
 
     @Override
-    public byte[] processOutbound(Packet packet, ChannelContext context, byte[] content) {
+    public byte[] processOutbound(ChannelContext context, byte[] content) {
         Security.EncryptionMode type = context.getEncryptionType();
         byte[] encryptedContent;
 
