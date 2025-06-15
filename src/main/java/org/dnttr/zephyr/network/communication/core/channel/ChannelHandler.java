@@ -28,7 +28,7 @@ public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
         Packet packet = (Packet) this.controller.getTransformer().transform(Direction.INBOUND, input, context);
 
         if (packet == null) {
-            context.restrict();
+            context.restrict("Unable to transform packet.");
             return;
         }
 

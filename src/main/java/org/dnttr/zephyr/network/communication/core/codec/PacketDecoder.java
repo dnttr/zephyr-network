@@ -6,7 +6,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import org.dnttr.zephyr.network.communication.core.packet.Carrier;
 import org.dnttr.zephyr.toolset.types.Type;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -30,6 +29,7 @@ public class PacketDecoder extends ByteToMessageDecoder {
                 return;
             }
 
+
             int packetId = buffer.readInt();
             int hashSize = buffer.readInt();
             int contentSize = buffer.readInt();
@@ -44,7 +44,14 @@ public class PacketDecoder extends ByteToMessageDecoder {
             }
 
             try {
-                Carrier carrier = this.split(version, packetId, hashSize, contentSize, buffer);
+                ByteBuf hashBuffer = hashSize > 0 ? buffer.readBytes(hashSize) : null;
+                ByteBuf contentBuffer = buffer.readBytes(contentSize);
+
+                byte[] hashData = hashBuffer != null ? ByteBufUtil.getBytes(hashBuffer) : null;
+                byte[] contentData = ByteBufUtil.getBytes(contentBuffer);
+
+                Carrier carrier = new Carrier(version, packetId, hashSize, contentSize, hashData,  contentData);
+
                 objects.add(carrier);
             } catch (Exception e) {
                 ctx.channel().disconnect();
@@ -66,17 +73,5 @@ public class PacketDecoder extends ByteToMessageDecoder {
 
             ctx.channel().disconnect();
         }
-    }
-
-    private @NotNull Carrier split(int version, int packetId, int hashSize, int contentSize, ByteBuf buffer) {
-        byte[] hashData = new byte[hashSize];
-        byte[] contentData = ByteBufUtil.getBytes(buffer.readBytes(contentSize));
-
-        if (hashSize > 0) {
-            ByteBuf temp = buffer.readBytes(hashSize);
-            hashData = ByteBufUtil.getBytes(temp);
-        }
-
-        return new Carrier(version, packetId, hashSize, contentSize, hashData, contentData);
     }
 }

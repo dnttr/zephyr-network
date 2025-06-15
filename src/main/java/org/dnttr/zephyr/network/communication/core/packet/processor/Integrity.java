@@ -15,7 +15,7 @@ public class Integrity {
 
     public boolean verify(@NotNull ChannelContext context, @NotNull Carrier carrier) {
         if (carrier.hash() == null || carrier.content() == null) {
-            context.restrict();
+            context.restrict("Hash or content is null.");
 
             return false;
         }
@@ -23,7 +23,7 @@ public class Integrity {
         boolean isPreserved = Security.verifySignature(context.getUuid(), carrier.hash(), carrier.content());
 
         if (!isPreserved) {
-            context.restrict();
+            context.restrict("Invalid signature.");
 
             return false;
         }

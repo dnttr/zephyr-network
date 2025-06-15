@@ -1,7 +1,7 @@
 package org.dnttr.zephyr.network.communication.api.controllers;
 
 import org.dnttr.zephyr.event.EventBus;
-import org.dnttr.zephyr.network.bridge.internal.ZEKit;
+import org.dnttr.zephyr.network.bridge.Security;
 import org.dnttr.zephyr.network.communication.api.ISession;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelController;
@@ -14,6 +14,10 @@ import org.dnttr.zephyr.network.protocol.packets.authorization.SessionNoncePacke
 import org.dnttr.zephyr.network.protocol.packets.authorization.SessionPrivatePacket;
 import org.dnttr.zephyr.network.protocol.packets.authorization.SessionPublicPacket;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Optional;
+
+import static org.dnttr.zephyr.network.bridge.Security.EncryptionMode.SYMMETRIC;
 
 /**
  * ClientChannelController is responsible for managing the client-side channel operations.
@@ -39,22 +43,36 @@ public final class ClientChannelController extends ChannelController {
         Observer auth = this.getObserverManager().observe(SessionPublicPacket.class, Direction.INBOUND, context);
         auth.thenAccept(msg0 -> {
             SessionPublicPacket serverAuthKey = (SessionPublicPacket) msg0;
-            ZEKit.ffi_ze_key(context.getUuid(), ZEKit.Type.ASYMMETRIC.getValue());
-            ZEKit.ffi_ze_set_asymmetric_received_key(context.getUuid(), serverAuthKey.getPublicKey());
 
-            byte[] clientAuthKey = ZEKit.ffi_ze_get_asymmetric_key(context.getUuid(), 0);
-            SessionPublicPacket clientAuthKeyPacket = new SessionPublicPacket(clientAuthKey);
+            Security.generateKeys(context.getUuid(), Security.EncryptionMode.ASYMMETRIC);
+            Security.setPartnerPublicKey(context.getUuid(), serverAuthKey.getPublicKey());
+
+            Optional<byte[]> clientAuthKey = Security.getKeyPair(context.getUuid(), Security.KeyType.PUBLIC);
+
+            if (clientAuthKey.isEmpty()) {
+                context.restrict("Unable to get public key for auth.");
+                return;
+            }
+
+            SessionPublicPacket clientAuthKeyPacket = new SessionPublicPacket(clientAuthKey.get());
             context.getChannel().writeAndFlush(clientAuthKeyPacket);
 
             Observer hash = this.getObserverManager().observe(SessionPublicPacket.class, Direction.INBOUND, context);
+
             hash.thenAccept(msg1 -> {
                 SessionPublicPacket serverHashKey = (SessionPublicPacket) msg1;
-                ZEKit.ffi_ze_set_rv_public_key_sh0(context.getUuid(), serverHashKey.getPublicKey());
+                Security.setSigningPublicKey(context.getUuid(), serverHashKey.getPublicKey());
 
-                byte[] clientKey = ZEKit.ffi_ze_get_base_public_key_sh0(context.getUuid());
+                Optional<byte[]> clientKey = Security.getBaseSigningKey(context.getUuid());
 
-                ZEKit.ffi_ze_derive_keys_sh0(context.getUuid(), 1);
-                ZEKit.ffi_ze_derive_final_key_sh0(context.getUuid(), 1);
+                if (clientKey.isEmpty()) {
+                    context.restrict("Unable to get public key for signing.");
+
+                    return;
+                }
+
+                Security.deriveSigningKeyPair(context.getUuid(), Security.SideType.CLIENT);
+                Security.finalizeSigningKeyPair(context.getUuid(), Security.SideType.CLIENT);
 
                 Observer otx = this.getObserverManager().observe(SessionPublicPacket.class, Direction.OUTBOUND, context);
                 otx.thenAccept(_ -> {
@@ -64,14 +82,14 @@ public final class ClientChannelController extends ChannelController {
                     noncePacket.thenAccept(packet -> {
                         SessionNoncePacket sessionNoncePacket = (SessionNoncePacket) packet;
 
-                        ZEKit.ffi_ze_set_nonce(context.getUuid(), ZEKit.Type.ASYMMETRIC.getValue(),  sessionNoncePacket.getNonce());
+                        Security.setNonce(context.getUuid(), Security.EncryptionMode.ASYMMETRIC,  sessionNoncePacket.getNonce());
 
                         Observer ott =  this.getObserverManager().observe(SessionPrivatePacket.class, Direction.INBOUND, context);
                         ott.thenAccept(msg4 -> {
                             SessionPrivatePacket sessionPrivatePacket = (SessionPrivatePacket) msg4;
-                            ZEKit.ffi_ze_set_exchange_message(context.getUuid(), sessionPrivatePacket.getKey());
+                            Security.processKeyExchange(context.getUuid(), sessionPrivatePacket.getKey());
 
-                            context.setEncryptionType(ZEKit.Type.SYMMETRIC);
+                            context.setEncryptionType(SYMMETRIC);
                             Observer obx = this.getObserverManager().observe(SessionStatePacket.class, Direction.OUTBOUND, context);
                             obx.thenAccept(msg5 -> context.setReady(true));
 
@@ -82,7 +100,7 @@ public final class ClientChannelController extends ChannelController {
                     });
                 });
 
-                context.getChannel().writeAndFlush(new SessionPublicPacket(clientKey));
+                context.getChannel().writeAndFlush(new SessionPublicPacket(clientKey.get()));
             });
         });
 

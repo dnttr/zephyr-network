@@ -48,7 +48,8 @@ public final class ChannelContext {
         };
     }
 
-    public void restrict() {
+    public void restrict(String reason) {
+        System.out.println(reason);
         this.restricted = true;
 
         this.channel.disconnect();

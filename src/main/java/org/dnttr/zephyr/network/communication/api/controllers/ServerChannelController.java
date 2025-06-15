@@ -44,7 +44,7 @@ public final class ServerChannelController extends ChannelController {
                 Optional<byte[]> authPubKey = Security.getKeyPair(context.getUuid(), Security.KeyType.PUBLIC);
 
                 if (authPubKey.isEmpty()) {
-                    context.restrict();
+                    context.restrict("Unable to get public key for auth.");
 
                     return;
                 }
@@ -61,7 +61,7 @@ public final class ServerChannelController extends ChannelController {
 
                     Optional<byte[]> baseSigningKey = Security.getBaseSigningKey(context.getUuid());
                     if (baseSigningKey.isEmpty()) {
-                        context.restrict();
+                        context.restrict("Unable to get public key for signing.");
 
                         return;
                     }
@@ -81,7 +81,7 @@ public final class ServerChannelController extends ChannelController {
                         Optional<byte[]> nonce = Security.getNonce(context.getUuid(), Security.EncryptionMode.ASYMMETRIC);
 
                         if (nonce.isEmpty()) {
-                            context.restrict();
+                            context.restrict("Unable to get nonce in asymmetric mode.");
 
                             return;
                         }
@@ -98,7 +98,7 @@ public final class ServerChannelController extends ChannelController {
                                 Optional<byte[]> keyExchange = Security.createKeyExchange(context.getUuid());
 
                                 if (keyExchange.isEmpty()) {
-                                    context.restrict();
+                                    context.restrict("Unable to create exchange message.");
                                     return;
                                 }
 
@@ -121,7 +121,7 @@ public final class ServerChannelController extends ChannelController {
                     });
                 });
             } else {
-                context.restrict();
+                context.restrict("Invalid state");
             }
         });
         super.fireActive(context);

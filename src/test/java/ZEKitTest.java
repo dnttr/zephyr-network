@@ -23,22 +23,22 @@ class ZEKitTest {
         File file = new File(path + "libze.dylib");
         System.load(file.getPath());
 
-        sessionId = ZEKit.ffi_zm_open_session();
+        sessionId = ZEKit.ffi_ze_create_session();
         assertTrue(sessionId != 0, "Session should be created");
     }
 
     @Test
     void testSymmetricEncryptionDecryption() {
-        ZEKit.ffi_ze_nonce(sessionId, ZEKit.Type.SYMMETRIC.getValue());
-        ZEKit.ffi_ze_key(sessionId, ZEKit.Type.SYMMETRIC.getValue());
+        ZEKit.ffi_ze_generate_nonce(sessionId, 0);
+        ZEKit.ffi_ze_generate_keys(sessionId, 0);
 
         byte[] message = "hello".getBytes();
         byte[] aead = "aead".getBytes();
 
-        byte[] encrypted = ZEKit.ffi_ze_encrypt_symmetric(sessionId, message, aead);
+        byte[] encrypted = ZEKit.ffi_ze_encrypt_data(sessionId, message, aead);
         assertNotNull(encrypted);
 
-        byte[] decrypted = ZEKit.ffi_ze_decrypt_symmetric(sessionId, encrypted, aead);
+        byte[] decrypted = ZEKit.ffi_ze_decrypt_data(sessionId, encrypted, aead);
 
         assertNotNull(decrypted);
         assertArrayEquals(message, decrypted);
@@ -46,13 +46,13 @@ class ZEKitTest {
 
     @Test
     void testAsymmetricEncryptionDecryption() {
-        ZEKit.ffi_ze_nonce(sessionId, ZEKit.Type.ASYMMETRIC.getValue());
-        ZEKit.ffi_ze_key(sessionId, ZEKit.Type.ASYMMETRIC.getValue());
+        ZEKit.ffi_ze_generate_nonce(sessionId, 1);
+        ZEKit.ffi_ze_generate_keys(sessionId, 1);
 
         byte[] message = "world".getBytes();
 
-        byte[] encrypted = ZEKit.ffi_ze_encrypt_asymmetric(sessionId, message);
-        byte[] decrypted = ZEKit.ffi_ze_decrypt_asymmetric(sessionId, encrypted);
+        byte[] encrypted = ZEKit.ffi_ze_encrypt_with_public_key(sessionId, message);
+        byte[] decrypted = ZEKit.ffi_ze_decrypt_with_private_key(sessionId, encrypted);
 
         assertNotNull(decrypted);
         assertArrayEquals(message, decrypted);
@@ -60,8 +60,8 @@ class ZEKitTest {
 
     @AfterAll
     static void tearDown() {
-        int closeResult = ZEKit.ffi_zm_close_session(sessionId);
+        int closeResult = ZEKit.ffi_ze_delete_session(sessionId);
         assertEquals(0, closeResult);
-        ZEKit.ffi_ze_close();
+        ZEKit.ffi_ze_close_library();
     }
 }
