@@ -4,7 +4,7 @@ import io.netty.channel.Channel;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
-import org.dnttr.zephyr.network.bridge.internal.ZEKit;
+import org.dnttr.zephyr.network.bridge.Security;
 import org.dnttr.zephyr.network.communication.core.Consumer;
 import org.dnttr.zephyr.network.protocol.Packet;
 
@@ -21,9 +21,7 @@ public final class ChannelContext {
 
     private final long uuid;
 
-    private byte[] nonce; //It is public so nobody cares about it
-
-    private ZEKit.Type encryptionType;
+    private Security.EncryptionMode encryptionType;
 
     @Setter(AccessLevel.NONE)
     private boolean restricted;
@@ -33,9 +31,10 @@ public final class ChannelContext {
     public ChannelContext(Channel channel) {
         this.channel = channel;
 
-        this.encryptionType = ZEKit.Type.NONE;
-        this.uuid = ZEKit.ffi_zm_open_session();
-        ZEKit.ffi_ze_build_base_key_sh0(this.uuid);
+        this.encryptionType = Security.EncryptionMode.NONE;
+        this.uuid = Security.createSession();
+
+        Security.generateSigningKeyPair(this.uuid);
 
         this.consumer = new Consumer() {
             @Override

@@ -2,14 +2,16 @@ package org.dnttr.zephyr.network.communication.core.channel;
 
 import lombok.RequiredArgsConstructor;
 import org.dnttr.zephyr.event.EventBus;
-import org.dnttr.zephyr.network.bridge.internal.ZEKit;
+import org.dnttr.zephyr.network.bridge.Security;
 import org.dnttr.zephyr.network.communication.core.flow.events.packet.PacketReceivedEvent;
 import org.dnttr.zephyr.network.communication.core.flow.events.packet.PacketSentEvent;
-import org.dnttr.zephyr.network.protocol.Packet;
 import org.dnttr.zephyr.network.communication.core.packet.Carrier;
 import org.dnttr.zephyr.network.communication.core.packet.processor.Direction;
 import org.dnttr.zephyr.network.communication.core.utilities.PacketUtils;
+import org.dnttr.zephyr.network.protocol.Packet;
 import org.dnttr.zephyr.network.protocol.packets.authorization.SessionNoncePacket;
+
+import java.util.Optional;
 
 /**
  * @author dnttr
@@ -30,9 +32,9 @@ public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
             return;
         }
 
-        if (context.getEncryptionType() == ZEKit.Type.SYMMETRIC) {
+        if (context.getEncryptionType() == Security.EncryptionMode.SYMMETRIC) {
             if (packet instanceof SessionNoncePacket noncePacket) {
-                ZEKit.ffi_ze_set_nonce(context.getUuid(), ZEKit.Type.SYMMETRIC.getValue(), noncePacket.getNonce());
+                Security.setNonce(context.getUuid(), Security.EncryptionMode.SYMMETRIC, noncePacket.getNonce());
             }
         }
 
@@ -61,12 +63,17 @@ public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
 
     @Override
     protected Carrier write(ChannelContext context, Packet input) throws Exception {
-        if (context.getEncryptionType() == ZEKit.Type.SYMMETRIC) {
+        if (context.getEncryptionType() == Security.EncryptionMode.SYMMETRIC) {
             boolean isNonce = input instanceof SessionNoncePacket;
 
             if (!isNonce) {
-                ZEKit.ffi_ze_nonce(context.getUuid(), ZEKit.Type.SYMMETRIC.getValue());
-                context.getChannel().writeAndFlush(new SessionNoncePacket(ZEKit.Type.SYMMETRIC.getValue(), ZEKit.ffi_ze_get_nonce(context.getUuid(), ZEKit.Type.SYMMETRIC.getValue())));
+                Security.buildNonce(context.getUuid(), Security.EncryptionMode.SYMMETRIC);
+                Optional<byte[]> nonce = Security.getNonce(context.getUuid(), Security.EncryptionMode.SYMMETRIC);
+
+                if (nonce.isPresent()) {
+                    SessionNoncePacket noncePacket = new SessionNoncePacket(Security.EncryptionMode.SYMMETRIC.getValue(), nonce.get());
+                    context.getChannel().writeAndFlush(noncePacket);
+                }
             }
         }
 
