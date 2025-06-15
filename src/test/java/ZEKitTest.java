@@ -1,4 +1,4 @@
-import org.dnttr.zephyr.network.bridge.ZEKit;
+import org.dnttr.zephyr.network.bridge.internal.ZEKit;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;

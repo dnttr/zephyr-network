@@ -1,4 +1,4 @@
-package org.dnttr.zephyr.network.bridge;
+package org.dnttr.zephyr.network.bridge.internal;
 
 /**
  * @author dnttr

@@ -2,7 +2,7 @@ package org.dnttr.zephyr.network.communication.core.channel;
 
 import lombok.RequiredArgsConstructor;
 import org.dnttr.zephyr.event.EventBus;
-import org.dnttr.zephyr.network.bridge.ZEKit;
+import org.dnttr.zephyr.network.bridge.internal.ZEKit;
 import org.dnttr.zephyr.network.communication.core.flow.events.packet.PacketReceivedEvent;
 import org.dnttr.zephyr.network.communication.core.flow.events.packet.PacketSentEvent;
 import org.dnttr.zephyr.network.protocol.Packet;

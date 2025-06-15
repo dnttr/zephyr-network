@@ -4,7 +4,7 @@ import io.netty.channel.Channel;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
-import org.dnttr.zephyr.network.bridge.ZEKit;
+import org.dnttr.zephyr.network.bridge.internal.ZEKit;
 import org.dnttr.zephyr.network.communication.core.Consumer;
 import org.dnttr.zephyr.network.protocol.Packet;
 

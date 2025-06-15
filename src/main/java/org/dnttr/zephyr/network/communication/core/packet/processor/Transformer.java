@@ -2,7 +2,7 @@ package org.dnttr.zephyr.network.communication.core.packet.processor;
 
 import io.netty.buffer.Unpooled;
 import lombok.Getter;
-import org.dnttr.zephyr.network.bridge.ZEKit;
+import org.dnttr.zephyr.network.bridge.internal.ZEKit;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.packet.Carrier;
 import org.dnttr.zephyr.network.communication.core.packet.processor.impl.SecureProcessor;

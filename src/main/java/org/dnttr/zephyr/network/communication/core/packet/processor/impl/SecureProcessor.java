@@ -1,6 +1,6 @@
 package org.dnttr.zephyr.network.communication.core.packet.processor.impl;
 
-import org.dnttr.zephyr.network.bridge.ZEKit;
+import org.dnttr.zephyr.network.bridge.internal.ZEKit;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.packet.processor.IProcessor;
 import org.dnttr.zephyr.network.protocol.Packet;

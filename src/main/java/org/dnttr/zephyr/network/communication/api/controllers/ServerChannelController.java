@@ -1,7 +1,7 @@
 package org.dnttr.zephyr.network.communication.api.controllers;
 
 import org.dnttr.zephyr.event.EventBus;
-import org.dnttr.zephyr.network.bridge.ZEKit;
+import org.dnttr.zephyr.network.bridge.internal.ZEKit;
 import org.dnttr.zephyr.network.communication.api.ISession;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelController;
