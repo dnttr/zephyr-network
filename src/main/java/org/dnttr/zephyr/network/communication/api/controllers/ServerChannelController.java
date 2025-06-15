@@ -62,12 +62,31 @@ public final class ServerChannelController extends ChannelController {
 
                         context.setHash(true);
 
-                        System.out.println("x");
-                        ZEKit.ffi_ze_key(context.getUuid(), ZEKit.Type.SYMMETRIC.getValue());
-                        byte[] bytes = ZEKit.ffi_ze_get_exchange_message(context.getUuid());
-                        SessionPrivatePacket privatePacket = new SessionPrivatePacket(bytes);
+                        byte[] nonce = ZEKit.ffi_ze_get_nonce(context.getUuid(), ZEKit.Type.ASYMMETRIC.getValue());
+                        SessionNoncePacket noncePacket = new SessionNoncePacket(ZEKit.Type.ASYMMETRIC.getValue(), nonce);
+                        Observer xx = this.getObserverManager().observe(SessionStatePacket.class, Direction.INBOUND, context);
+                        xx.thenAccept(msg3 -> {
+                            SessionStatePacket packet3 = (SessionStatePacket) msg3;
 
-                        context.getChannel().writeAndFlush(privatePacket);
+                            if (State.from(packet3.getState()) == State.REGISTER_EXCHANGE) {
+                                ZEKit.ffi_ze_key(context.getUuid(), ZEKit.Type.SYMMETRIC.getValue());
+                                byte[] bytes = ZEKit.ffi_ze_get_exchange_message(context.getUuid());
+                                SessionPrivatePacket privatePacket = new SessionPrivatePacket(bytes);
+
+                                context.getChannel().writeAndFlush(privatePacket);
+
+                                Observer kt  = this.getObserverManager().observe(SessionStatePacket.class, Direction.INBOUND, context);
+                                kt.thenAccept(msg4 -> {
+                                    SessionStatePacket packet4 = (SessionStatePacket) msg4;
+
+                                    if (State.from(packet4.getState()) == State.REGISTER_FINISH) {
+                                        System.out.println("OK");
+                                    }
+                                });
+                                context.setEncryptionType(ZEKit.Type.SYMMETRIC);
+                            }
+                        });
+                        context.getChannel().writeAndFlush(noncePacket);
                     });
                 });
             } else {
@@ -101,6 +120,11 @@ public final class ServerChannelController extends ChannelController {
     @Override
     public void fireRead(@NotNull ChannelContext context, @NotNull Packet msg) {
         super.fireRead(context, msg);
+    }
+
+    @Override
+    public void fireWrite(@NotNull ChannelContext context, @NotNull Packet msg) {
+        super.fireWrite(context, msg);
     }
 
     @Override

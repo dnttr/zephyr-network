@@ -15,8 +15,6 @@ import org.dnttr.zephyr.network.protocol.packets.authorization.SessionPrivatePac
 import org.dnttr.zephyr.network.protocol.packets.authorization.SessionPublicPacket;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-
 /**
  * ClientChannelController is responsible for managing the client-side channel operations.
  * It extends the ChannelController and initializes with specific session packets.
@@ -41,7 +39,6 @@ public final class ClientChannelController extends ChannelController {
         Observer auth = this.getObserverManager().observe(SessionPublicPacket.class, Direction.INBOUND, context);
         auth.thenAccept(msg0 -> {
             SessionPublicPacket serverAuthKey = (SessionPublicPacket) msg0;
-            ZEKit.ffi_ze_nonce(context.getUuid(), ZEKit.Type.ASYMMETRIC.getValue());
             ZEKit.ffi_ze_key(context.getUuid(), ZEKit.Type.ASYMMETRIC.getValue());
             ZEKit.ffi_ze_set_asymmetric_received_key(context.getUuid(), serverAuthKey.getPublicKey());
 
@@ -63,10 +60,22 @@ public final class ClientChannelController extends ChannelController {
                 otx.thenAccept(_ -> {
                     context.setHash(true);
 
-                    Observer privatePacket = this.getObserverManager().observe(SessionPrivatePacket.class, Direction.INBOUND, context);
-                    privatePacket.thenAccept(packet -> {
-                        SessionPrivatePacket sessionPrivatePacket = (SessionPrivatePacket) packet;
-                        System.out.println(Arrays.toString(sessionPrivatePacket.getKey()));
+                    Observer noncePacket = this.getObserverManager().observe(SessionNoncePacket.class, Direction.INBOUND, context);
+                    noncePacket.thenAccept(packet -> {
+                        SessionNoncePacket sessionNoncePacket = (SessionNoncePacket) packet;
+
+                        ZEKit.ffi_ze_set_nonce(context.getUuid(), ZEKit.Type.ASYMMETRIC.getValue(),  sessionNoncePacket.getNonce());
+
+                        Observer ott =  this.getObserverManager().observe(SessionPrivatePacket.class, Direction.INBOUND, context);
+                        ott.thenAccept(msg4 -> {
+                            SessionPrivatePacket sessionPrivatePacket = (SessionPrivatePacket) msg4;
+                            ZEKit.ffi_ze_set_exchange_message(context.getUuid(), sessionPrivatePacket.getKey());
+
+                            context.setEncryptionType(ZEKit.Type.SYMMETRIC);
+                            context.getChannel().writeAndFlush(new SessionStatePacket(SessionStatePacket.State.REGISTER_FINISH.getValue()));
+                        });
+
+                        context.getChannel().writeAndFlush(new SessionStatePacket(SessionStatePacket.State.REGISTER_EXCHANGE.getValue()));
                     });
                 });
 
@@ -78,9 +87,6 @@ public final class ClientChannelController extends ChannelController {
         context.getChannel().writeAndFlush(packet);
 
         super.fireActive(context);
-    }
-
-    private void continueAuth(@NotNull ChannelContext context) {
     }
 
     @Override

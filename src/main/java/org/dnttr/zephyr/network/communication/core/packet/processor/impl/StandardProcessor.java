@@ -20,11 +20,11 @@ public class StandardProcessor implements IProcessor {
     }
 
     @Override
-    public byte[] processOutbound(Packet message, ChannelContext context, byte[] bytes) {
-        if (bytes == null || bytes.length == 0) {
+    public byte[] processOutbound(Packet message, ChannelContext context, byte[] content) {
+        if (content == null || content.length == 0) {
             return null;
         }
 
-        return bytes;
+        return content;
     }
 }

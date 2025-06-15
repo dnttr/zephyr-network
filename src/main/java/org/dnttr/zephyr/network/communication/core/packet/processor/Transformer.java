@@ -43,6 +43,8 @@ public class Transformer {
         switch (direction) {
             case INBOUND -> {
                 if (message instanceof Carrier carrier) {
+                    int packetId = carrier.identity();
+
                     if (carrier.hashSize() != 0 && context.isHash()) {
                         if (carrier.hash() == null || carrier.content() == null) {
                             context.restrict();
@@ -57,10 +59,21 @@ public class Transformer {
                         }
                     }
 
-                    byte[] result = processor.processInbound(context, carrier.content());
+                    byte[] result;
+
+                    if (packetId != -0x3) {
+                        result = processor.processInbound(context, carrier.content());
+                    } else {
+                        result = carrier.content();
+                    }
+
                     var klass = this.packets.get(carrier.identity());
 
                     if (klass == null) {
+                        return null;
+                    }
+
+                    if (result == null) {
                         return null;
                     }
 
@@ -73,10 +86,16 @@ public class Transformer {
             case OUTBOUND -> {
                 if (message instanceof Packet packet) {
                     byte[] serializedPacket = Serializer.serializeToArray(packet.getClass(), packet);
-                    byte[] processedPacket = processor.processOutbound(packet, context, serializedPacket);
+                    byte[] processedPacket;
 
                     int versionId = packet.getData().protocol();
                     int packetId = packet.getData().identity();
+
+                    if (packetId != -0x3) {
+                        processedPacket = processor.processOutbound(packet, context, serializedPacket);
+                    } else {
+                        processedPacket = serializedPacket;
+                    }
 
                     if (context.isHash()) {
                         byte[] computedHash = ZEKit.ffi_ze_build_hash_sh0(context.getUuid(), processedPacket);
