@@ -30,7 +30,6 @@ public class PacketDecoder extends ByteToMessageDecoder {
                 return;
             }
 
-
             int packetId = buffer.readInt();
             int hashSize = buffer.readInt();
             int contentSize = buffer.readInt();
