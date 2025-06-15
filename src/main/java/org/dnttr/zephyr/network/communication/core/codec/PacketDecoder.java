@@ -6,6 +6,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import org.dnttr.zephyr.network.communication.core.packet.Carrier;
 import org.dnttr.zephyr.toolset.types.Type;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -15,7 +16,7 @@ import java.util.List;
 
 public class PacketDecoder extends ByteToMessageDecoder {
 
-    private final int requiredBytes = 5 * Type.INT.getBytes();
+    private final int requiredBytes = 5 * Type.INT.getBytes(); //shouldn't this be 4? whatever for now
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf buffer, List<Object> objects) {
@@ -30,21 +31,13 @@ public class PacketDecoder extends ByteToMessageDecoder {
             }
 
 
-            int identity = buffer.readInt();
-            int hash = buffer.readInt();
-            int content = buffer.readInt();
+            int packetId = buffer.readInt();
+            int hashSize = buffer.readInt();
+            int contentSize = buffer.readInt();
 
-            int totalPacketLength = hash + content;
+            int totalPacketLength = hashSize + contentSize;
 
-            if (content <= 0) {
-                ctx.channel().disconnect();
-                return;
-            }
-
-            if (hash <= 0 && !(identity == -1 || identity == -2)) {
-                ctx.channel().disconnect();
-                return;
-            }
+            this.validate(ctx, packetId, hashSize, contentSize);
 
             if (buffer.readableBytes() < totalPacketLength) {
                 buffer.resetReaderIndex();
@@ -52,19 +45,39 @@ public class PacketDecoder extends ByteToMessageDecoder {
             }
 
             try {
-                ByteBuf hashBuffer = hash > 0 ? buffer.readBytes(hash) : null;
-                ByteBuf contentBuffer = buffer.readBytes(content);
-
-                byte[] hashData = hashBuffer != null ? ByteBufUtil.getBytes(hashBuffer) : null;
-                byte[] contentData = ByteBufUtil.getBytes(contentBuffer);
-
-                Carrier carrier = new Carrier(version, identity, hash, content, hashData,  contentData);
-
+                Carrier carrier = this.split(version, packetId, hashSize, contentSize, buffer);
                 objects.add(carrier);
             } catch (Exception e) {
                 ctx.channel().disconnect();
                 return;
             }
         }
+    }
+
+    private void validate(ChannelHandlerContext ctx, int packetId, int hashSize, int contentSize) {
+        if (contentSize <= 0) {
+            ctx.channel().disconnect();
+            return;
+        }
+
+        if (hashSize <= 0) {
+            if (packetId == -1 || packetId == -2) {
+                return;
+            }
+
+            ctx.channel().disconnect();
+        }
+    }
+
+    private @NotNull Carrier split(int version, int packetId, int hashSize, int contentSize, ByteBuf buffer) {
+        byte[] hashData = new byte[hashSize];
+        byte[] contentData = ByteBufUtil.getBytes(buffer.readBytes(contentSize));
+
+        if (hashSize > 0) {
+            ByteBuf temp = buffer.readBytes(hashSize);
+            hashData = ByteBufUtil.getBytes(temp);
+        }
+
+        return new Carrier(version, packetId, hashSize, contentSize, hashData, contentData);
     }
 }
