@@ -153,6 +153,16 @@ public final class Security {
             throw new IllegalArgumentException("Invalid uuid provided");
         }
 
+        if (message.length == 0) {
+            return Optional.empty();
+        }
+
+        if (aead != null) {
+            if (aead.length == 0) {
+                throw new IllegalArgumentException("Aead provided is not empty");
+            }
+        }
+
         switch (mode) {
             case SYMMETRIC -> {
                 return Optional.ofNullable(ZEKit.ffi_ze_encrypt_data(uuid, message, aead)).map(byte[]::clone);
@@ -191,6 +201,16 @@ public final class Security {
 
         if (uuid <= 0) {
             throw new IllegalArgumentException("Invalid uuid provided");
+        }
+
+        if (message.length == 0) {
+            return Optional.empty();
+        }
+
+        if (aead != null) {
+            if (aead.length == 0) {
+                return Optional.empty();
+            }
         }
 
         switch (mode) {
@@ -278,6 +298,10 @@ public final class Security {
         }
 
         if (type == EncryptionMode.NONE) {
+            return false;
+        }
+
+        if (nonce.length == 0) {
             return false;
         }
 
