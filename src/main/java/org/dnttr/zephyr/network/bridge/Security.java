@@ -405,7 +405,9 @@ public final class Security {
             return false;
         }
 
-        return ZEKit.ffi_ze_verify_signature(uuid, hash, message);
+        int code = ZEKit.ffi_ze_verify_signature(uuid, hash, message);
+
+        return code == 0;
     }
 
     /**

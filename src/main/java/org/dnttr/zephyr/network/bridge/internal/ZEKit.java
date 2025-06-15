@@ -157,9 +157,9 @@ public final class ZEKit {
      * @param uuid Session identifier
      * @param hashBuffer Hash to verify
      * @param messageBuffer Message to verify against
-     * @return true if hash matches the message, false otherwise
+     * @return Status code indicating SUCCESS or FAILURE
      */
-    public static native boolean ffi_ze_verify_signature(long uuid, byte[] hashBuffer, byte[] messageBuffer);
+    public static native int ffi_ze_verify_signature(long uuid, byte[] hashBuffer, byte[] messageBuffer);
 
     /**
      * Sets the public key received from the other side for asymmetric encryption/decryption.
