@@ -8,6 +8,7 @@ package org.dnttr.zephyr.network.bridge;
 
 import lombok.Getter;
 import org.dnttr.zephyr.network.bridge.internal.ZEKit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +35,8 @@ import java.util.Optional;
  * @since 1.0.4
  * @version 1.0.4-ZE
  */
+
+@ApiStatus.NonExtendable
 public final class Security {
 
     /**
