@@ -80,7 +80,7 @@ public final class ServerChannelController extends ChannelController {
                                     SessionStatePacket packet4 = (SessionStatePacket) msg4;
 
                                     if (State.from(packet4.getState()) == State.REGISTER_FINISH) {
-                                        System.out.println("OK");
+                                        context.setReady(true);
                                     }
                                 });
                                 context.setEncryptionType(ZEKit.Type.SYMMETRIC);
@@ -95,27 +95,6 @@ public final class ServerChannelController extends ChannelController {
         });
         super.fireActive(context);
     }
-
-    /*
-    SessionStatePacket packet3 = new SessionStatePacket(State.REGISTER_RESPONSE.getValue());
-                        context.getChannel().writeAndFlush(packet3);
-
-              System.out.println(context.isHash());
-                            byte[] nonce = ZEKit.ffi_ze_get_nonce(context.getUuid(), ZEKit.Type.ASYMMETRIC.getValue());
-                            System.out.println(Arrays.toString(nonce));
-                            SessionNoncePacket noncePacket = new SessionNoncePacket(ZEKit.Type.ASYMMETRIC.getValue(), nonce);
-                            context.getChannel().writeAndFlush(noncePacket);
-     */
-
-    /*
-     *    byte[] nonce = ZEKit.ffi_ze_get_nonce(context.getUuid(), ZEKit.Type.ASYMMETRIC.getValue());
-
-                SessionNoncePacket noncePacket = new SessionNoncePacket(ZEKit.Type.ASYMMETRIC.getValue(), nonce);
-                context.getChannel().writeAndFlush(noncePacket);
-
-                byte[] authKey = ZEKit.ffi_ze_get_asymmetric_key(context.getUuid(), 0);
-                SessionPublicPacket publicPacket = new SessionPublicPacket(authKey);
-     */
 
     @Override
     public void fireRead(@NotNull ChannelContext context, @NotNull Packet msg) {

@@ -72,6 +72,9 @@ public final class ClientChannelController extends ChannelController {
                             ZEKit.ffi_ze_set_exchange_message(context.getUuid(), sessionPrivatePacket.getKey());
 
                             context.setEncryptionType(ZEKit.Type.SYMMETRIC);
+                            Observer obx = this.getObserverManager().observe(SessionStatePacket.class, Direction.OUTBOUND, context);
+                            obx.thenAccept(msg5 -> context.setReady(true));
+
                             context.getChannel().writeAndFlush(new SessionStatePacket(SessionStatePacket.State.REGISTER_FINISH.getValue()));
                         });
 
