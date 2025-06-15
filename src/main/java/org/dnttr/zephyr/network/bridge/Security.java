@@ -1,3 +1,9 @@
+/*
+ * Part of the Zephyr-Encryption project
+ * Copyright (c) 2025 dnttr
+ *
+ * This source code is licensed under the MIT license.
+ */
 package org.dnttr.zephyr.network.bridge;
 
 import lombok.Getter;
@@ -9,14 +15,37 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
+ * High-level cryptographic API for secure communications.
+ * <p>
+ * This class provides a safe, idiomatic Java interface to the native cryptographic
+ * library via JNI, supporting symmetric and asymmetric encryption, key management,
+ * signing, and secure session handling.
+ * </p>
+ * <p>
+ * All operations are session-based and require a valid session UUID, which is
+ * managed internally by the native library. This class ensures parameter validation,
+ * defensive copying, and safe error handling.
+ * </p>
+ * <p>
+ * <strong>Usage:</strong> Always use this class instead of direct native calls.
+ * </p>
+ *
  * @author dnttr
+ * @since 1.0.4
+ * @version 1.0.4-ZE
  */
-
 public final class Security {
 
+    /**
+     * Supported encryption modes.
+     * @implNote Mode NONE isn't supported as a parameter,<br>it is the caller responsibility to take that into account
+     */
     public enum EncryptionMode {
+        /** No encryption. */
         NONE(-1),
+        /** Symmetric encryption. */
         SYMMETRIC(0),
+        /** Asymmetric encryption. */
         ASYMMETRIC(1);
 
         @Getter
@@ -27,9 +56,14 @@ public final class Security {
         }
     }
 
+    /**
+     * Key types for asymmetric cryptography.
+     */
     public enum KeyType
     {
+        /** Public key. */
         PUBLIC(0),
+        /** Private key. */
         PRIVATE(1);
 
         @Getter
@@ -40,8 +74,13 @@ public final class Security {
         }
     }
 
+    /**
+     * Connection side for key derivation.
+     */
     public enum SideType {
+        /** Server side. */
         SERVER(0),
+        /** Client side. */
         CLIENT(1);
 
         @Getter
@@ -52,6 +91,12 @@ public final class Security {
         }
     }
 
+    /**
+     * Creates a new cryptographic session.
+     *
+     * @return UUID identifying the session
+     * @throws IllegalStateException if session creation fails
+     */
     public static long createSession() {
         long uuid = ZEKit.ffi_ze_create_session();
 
@@ -62,6 +107,13 @@ public final class Security {
         return uuid;
     }
 
+    /**
+     * Deletes a cryptographic session and releases resources.
+     *
+     * @param uuid Session identifier
+     * @return true if deletion succeeded, false otherwise
+     * @throws IllegalArgumentException if uuid is invalid
+     */
     public static boolean deleteSession(long uuid) {
         if (uuid <= 0) {
             throw new IllegalArgumentException("Delete session failed due to illegal uuid provided");
@@ -71,51 +123,103 @@ public final class Security {
         return code == 0;
     }
 
+    /**
+     * Closes the native cryptographic library and releases all resources.
+     */
     public static void closeLibrary() {
         ZEKit.ffi_ze_close_library();
     }
 
-    public static Optional<byte[]> encryptData(long uuid, byte @NotNull [] message, byte @Nullable [] aead) {
+    /**
+     * Encrypts data using the specified session and encryption mode.
+     * <p>
+     * For {@link EncryptionMode#SYMMETRIC}, uses the session's symmetric key and optional AEAD.
+     * For {@link EncryptionMode#ASYMMETRIC}, uses the session's public key (AEAD is ignored).
+     * </p>
+     *
+     * @param uuid   Session identifier
+     * @param mode   Encryption mode (symmetric or asymmetric)
+     * @param message Data to encrypt (not null)
+     * @param aead   Optional associated data for AEAD (may or may not, be null, only used in symmetric mode)
+     * @return Optional containing the encrypted data, or empty if encryption fails
+     * @throws IllegalArgumentException if uuid is invalid or mode is NONE
+     * @throws NullPointerException     if message or mode is null
+     */
+    public static Optional<byte[]> encrypt(long uuid, @NotNull EncryptionMode mode, byte @NotNull [] message, byte @Nullable [] aead) {
         Objects.requireNonNull(message);
+        Objects.requireNonNull(mode);
 
         if (uuid <= 0) {
             throw new IllegalArgumentException("Invalid uuid provided");
         }
 
-        return Optional.ofNullable(ZEKit.ffi_ze_encrypt_data(uuid, message, aead)).map(byte[]::clone);
+        switch (mode) {
+            case SYMMETRIC -> {
+                return Optional.ofNullable(ZEKit.ffi_ze_encrypt_data(uuid, message, aead)).map(byte[]::clone);
+            }
+
+            case ASYMMETRIC -> {
+                return Optional.ofNullable(ZEKit.ffi_ze_encrypt_with_public_key(uuid, message)).map(byte[]::clone);
+            }
+
+            case NONE -> {
+                return Optional.of(message);
+            }
+
+            default -> throw new IllegalArgumentException("Invalid mode provided");
+        }
     }
 
-    public static Optional<byte[]> decryptData(long uuid, byte @NotNull [] message, byte @Nullable [] aead) {
+    /**
+     * Decrypts data using the specified session and encryption mode.
+     * <p>
+     * For {@link EncryptionMode#SYMMETRIC}, uses the session's symmetric key and optional AEAD.
+     * For {@link EncryptionMode#ASYMMETRIC}, uses the session's private key (AEAD is ignored).
+     * </p>
+     *
+     * @param uuid   Session identifier
+     * @param mode   Encryption mode (symmetric or asymmetric)
+     * @param message Data to decrypt (not null)
+     * @param aead   Optional associated data for AEAD (may, or may not, be null, only used in symmetric mode)
+     * @return Optional containing the decrypted data, or empty if decryption fails
+     * @throws IllegalArgumentException if uuid is invalid or mode is NONE
+     * @throws NullPointerException     if message or mode is null
+     */
+    public static Optional<byte[]> decrypt(long uuid, @NotNull EncryptionMode mode, byte @NotNull [] message, byte @Nullable [] aead) {
         Objects.requireNonNull(message);
+        Objects.requireNonNull(mode);
 
         if (uuid <= 0) {
             throw new IllegalArgumentException("Invalid uuid provided");
         }
 
-        return Optional.ofNullable(ZEKit.ffi_ze_decrypt_data(uuid, message, aead)).map(byte[]::clone);
-    }
+        switch (mode) {
+            case SYMMETRIC -> {
+                return Optional.ofNullable(ZEKit.ffi_ze_decrypt_data(uuid, message, aead)).map(byte[]::clone);
+            }
 
-    public static Optional<byte[]> encryptDataWithPublicKey(long uuid, byte @NotNull [] message) {
-        Objects.requireNonNull(message);
+            case ASYMMETRIC -> {
+                return Optional.ofNullable(ZEKit.ffi_ze_decrypt_with_private_key(uuid, message)).map(byte[]::clone);
+            }
 
-        if (uuid <= 0) {
-            throw new IllegalArgumentException("Invalid uuid provided");
+            case NONE -> {
+                return Optional.of(message);
+            }
+
+            default -> throw new IllegalArgumentException("Invalid mode provided");
         }
-
-        return Optional.ofNullable(ZEKit.ffi_ze_encrypt_with_public_key(uuid, message)).map(byte[]::clone);
     }
 
-    public static Optional<byte[]> decryptDataWithPrivateKey(long uuid, byte @NotNull [] message) {
-        Objects.requireNonNull(message);
-
-        if (uuid <= 0) {
-            throw new IllegalArgumentException("Invalid uuid provided");
-        }
-
-        return Optional.ofNullable(ZEKit.ffi_ze_decrypt_with_private_key(uuid, message)).map(byte[]::clone);
-    }
-
-    public static boolean generateNonce(long uuid, @NotNull EncryptionMode type) {
+    /**
+     * Generates a nonce for the specified encryption mode.
+     *
+     * @param uuid Session identifier
+     * @param type Encryption mode
+     * @return true if nonce generation succeeded, false otherwise
+     * @throws IllegalArgumentException if uuid is invalid
+     * @throws NullPointerException if type is null
+     */
+    public static boolean buildNonce(long uuid, @NotNull EncryptionMode type) {
         Objects.requireNonNull(type);
 
         if (uuid <= 0) {
@@ -132,7 +236,16 @@ public final class Security {
         return code == 0;
     }
 
-    public static Optional<byte[]> getNonce(long uuid,  @NotNull EncryptionMode type) {
+    /**
+     * Retrieves the nonce for the specified encryption mode.
+     *
+     * @param uuid Session identifier
+     * @param type Encryption mode
+     * @return Optional containing the nonce, or empty if not available
+     * @throws IllegalArgumentException if uuid is invalid
+     * @throws NullPointerException if type is null
+     */
+    public static Optional<byte[]> getNonce(long uuid, @NotNull EncryptionMode type) {
         Objects.requireNonNull(type);
 
         if (uuid <= 0) {
@@ -147,6 +260,16 @@ public final class Security {
         return Optional.ofNullable(ZEKit.ffi_ze_get_nonce(uuid, mode)).map(byte[]::clone);
     }
 
+    /**
+     * Sets the nonce for the specified encryption mode.
+     *
+     * @param uuid Session identifier
+     * @param type Encryption mode
+     * @param nonce Nonce data
+     * @return true if nonce was set successfully, false otherwise
+     * @throws IllegalArgumentException if uuid is invalid
+     * @throws NullPointerException if type is null
+     */
     public static boolean setNonce(long uuid, @NotNull EncryptionMode type, byte[] nonce) {
         Objects.requireNonNull(type);
 
@@ -164,6 +287,15 @@ public final class Security {
         return code == 0;
     }
 
+    /**
+     * Generates keys for the specified encryption mode.
+     *
+     * @param uuid Session identifier
+     * @param type Encryption mode
+     * @return true if key generation succeeded, false otherwise
+     * @throws IllegalArgumentException if uuid is invalid
+     * @throws NullPointerException if type is null
+     */
     public static boolean generateKeys(long uuid, @NotNull EncryptionMode type) {
         Objects.requireNonNull(type);
 
@@ -181,7 +313,16 @@ public final class Security {
         return code == 0;
     }
 
-    public static Optional<byte[]> getKeypair(long uuid,  @NotNull KeyType type) {
+    /**
+     * Retrieves a keypair for the specified type.
+     *
+     * @param uuid Session identifier
+     * @param type Key type (public/private)
+     * @return Optional containing the key, or empty if not available
+     * @throws IllegalArgumentException if uuid is invalid
+     * @throws NullPointerException if type is null
+     */
+    public static Optional<byte[]> getKeyPair(long uuid,  @NotNull KeyType type) {
         Objects.requireNonNull(type);
 
         if (uuid <= 0) {
@@ -192,7 +333,16 @@ public final class Security {
         return Optional.ofNullable(ZEKit.ffi_ze_get_keypair(uuid, mode)).map(byte[]::clone);
     }
 
-    public static Optional<byte[]> createSignature(long uuid, byte @NotNull [] message) {
+    /**
+     * Creates a digital signature for the given message.
+     *
+     * @param uuid Session identifier
+     * @param message Message to sign
+     * @return Optional containing the signature, or empty if signing fails
+     * @throws IllegalArgumentException if uuid is invalid
+     * @throws NullPointerException if message is null
+     */
+    public static Optional<byte[]> sign(long uuid, byte @NotNull [] message) {
         Objects.requireNonNull(message);
 
         if (uuid <= 0) {
@@ -206,6 +356,16 @@ public final class Security {
         return Optional.ofNullable(ZEKit.ffi_ze_create_signature(uuid, message)).map(byte[]::clone);
     }
 
+    /**
+     * Verifies a digital signature for the given message.
+     *
+     * @param uuid Session identifier
+     * @param hash Signature to verify
+     * @param message Message to verify against
+     * @return true if signature is valid, false otherwise
+     * @throws IllegalArgumentException if uuid is invalid
+     * @throws NullPointerException if hash or message is null
+     */
     public static boolean verifySignature(long uuid, byte @NotNull [] hash, byte @Nullable [] message) {
         Objects.requireNonNull(message);
         Objects.requireNonNull(hash);
@@ -221,6 +381,15 @@ public final class Security {
         return ZEKit.ffi_ze_verify_signature(uuid, hash, message);
     }
 
+    /**
+     * Sets the partner's public key for asymmetric encryption.
+     *
+     * @param uuid Session identifier
+     * @param key Partner's public key
+     * @return true if the key was set successfully, false otherwise
+     * @throws IllegalArgumentException if uuid is invalid
+     * @throws NullPointerException if key is null
+     */
     public static boolean setPartnerPublicKey(long uuid, byte @NotNull [] key) {
         Objects.requireNonNull(key);
 
@@ -236,7 +405,14 @@ public final class Security {
         return code == 0;
     }
 
-    public static boolean generateSigningKeypair(long uuid) {
+    /**
+     * Generates a base signing keypair for the session.
+     *
+     * @param uuid Session identifier
+     * @return true if keypair generation succeeded, false otherwise
+     * @throws IllegalArgumentException if uuid is invalid
+     */
+    public static boolean generateSigningKeyPair(long uuid) {
         if (uuid <= 0) {
             throw new IllegalArgumentException("Invalid uuid provided");
         }
@@ -245,7 +421,16 @@ public final class Security {
         return code == 0;
     }
 
-    public static boolean deriveSigningKeypair(long uuid, @NotNull SideType side) {
+    /**
+     * Derives signing keys for the specified side.
+     *
+     * @param uuid Session identifier
+     * @param side Connection side (server/client)
+     * @return true if key derivation succeeded, false otherwise
+     * @throws IllegalArgumentException if uuid is invalid
+     * @throws NullPointerException if side is null
+     */
+    public static boolean deriveSigningKeyPair(long uuid, @NotNull SideType side) {
         Objects.requireNonNull(side);
 
         if (uuid <= 0) {
@@ -256,7 +441,16 @@ public final class Security {
         return code == 0;
     }
 
-    public static boolean finalizeSigningKeypair(long uuid, @NotNull SideType side) {
+    /**
+     * Finalizes signing keypair derivation for the specified side.
+     *
+     * @param uuid Session identifier
+     * @param side Connection side (server/client)
+     * @return true if finalization succeeded, false otherwise
+     * @throws IllegalArgumentException if uuid is invalid
+     * @throws NullPointerException if side is null
+     */
+    public static boolean finalizeSigningKeyPair(long uuid, @NotNull SideType side) {
         Objects.requireNonNull(side);
 
         if (uuid <= 0) {
@@ -267,6 +461,15 @@ public final class Security {
         return code == 0;
     }
 
+    /**
+     * Sets the partner's signing public key.
+     *
+     * @param uuid Session identifier
+     * @param key Partner's signing public key
+     * @return true if the key was set successfully, false otherwise
+     * @throws IllegalArgumentException if uuid is invalid
+     * @throws NullPointerException if key is null
+     */
     public static boolean setSigningPublicKey(long uuid, byte @NotNull [] key) {
         Objects.requireNonNull(key);
 
@@ -282,6 +485,13 @@ public final class Security {
         return code == 0;
     }
 
+    /**
+     * Retrieves the base signing public key for the session.
+     *
+     * @param uuid Session identifier
+     * @return Optional containing the base signing key, or empty if not available
+     * @throws IllegalArgumentException if uuid is invalid
+     */
     public static Optional<byte[]> getBaseSigningKey(long uuid) {
         if (uuid <= 0) {
             throw new IllegalArgumentException("Invalid uuid provided");
@@ -290,6 +500,13 @@ public final class Security {
         return Optional.ofNullable(ZEKit.ffi_ze_get_base_signing_key(uuid)).map(byte[]::clone);
     }
 
+    /**
+     * Creates a key exchange message for the session.
+     *
+     * @param uuid Session identifier
+     * @return Optional containing the key exchange message, or empty if not available
+     * @throws IllegalArgumentException if uuid is invalid
+     */
     public static Optional<byte[]> createKeyExchange(long uuid) {
         if (uuid <= 0) {
             throw new IllegalArgumentException("Invalid uuid provided");
@@ -298,6 +515,15 @@ public final class Security {
         return Optional.ofNullable(ZEKit.ffi_ze_create_key_exchange(uuid)).map(byte[]::clone);
     }
 
+    /**
+     * Processes a received key exchange message.
+     *
+     * @param uuid Session identifier
+     * @param message Key exchange message to process
+     * @return true if processing succeeded, false otherwise
+     * @throws IllegalArgumentException if uuid is invalid
+     * @throws NullPointerException if message is null
+     */
     public static boolean processKeyExchange(long uuid, byte[] message) {
         Objects.requireNonNull(message);
 
