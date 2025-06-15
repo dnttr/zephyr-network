@@ -28,8 +28,8 @@ import org.jetbrains.annotations.ApiStatus;
  * </p>
  *
  * @author dnttr
- * @since 1.0.0-ZE
- * @version 1.0.3-ZE
+ * @since 1.0.0
+ * @version 1.0.4-ZE
  */
 
 @ApiStatus.Internal
@@ -46,7 +46,7 @@ public final class ZEKit {
     /**
      * Terminates a cryptographic session and releases associated resources.
      *
-     * @param uuid Session identifier returned by {@link #ffi_zm_open_session()}
+     * @param uuid Session identifier returned by {@link #ffi_ze_create_session()}
      * @return Status code indicating SUCCESS or FAILURE
      */
     public static native int ffi_ze_delete_session(long uuid);
@@ -101,8 +101,9 @@ public final class ZEKit {
      *
      * @param uuid Session identifier
      * @param mode Encryption type: 0 for SYMMETRIC, 1 for ASYMMETRIC
+     * @return Status code indicating SUCCESS or FAILURE
      */
-    public static native void ffi_ze_generate_nonce(long uuid, int mode);
+    public static native int ffi_ze_generate_nonce(long uuid, int mode);
 
     /**
      * Retrieves the nonce for the specified encryption type.
@@ -119,16 +120,18 @@ public final class ZEKit {
      * @param uuid Session identifier
      * @param mode Encryption type: 0 for SYMMETRIC, 1 for ASYMMETRIC
      * @param nonceBuffer Nonce data
+     * @return Status code indicating SUCCESS or FAILURE
      */
-    public static native void ffi_ze_set_nonce(long uuid, int mode, byte[] nonceBuffer);
+    public static native int ffi_ze_set_nonce(long uuid, int mode, byte[] nonceBuffer);
 
     /**
      * Builds a key for encryption/decryption operations.
      *
      * @param uuid Session identifier
      * @param mode Encryption type: 0 for SYMMETRIC, 1 for ASYMMETRIC
+     * @return Status code indicating SUCCESS or FAILURE
      */
-    public static native void ffi_ze_generate_keys(long uuid, int mode);
+    public static native int ffi_ze_generate_keys(long uuid, int mode);
 
     /**
      * Retrieves an asymmetric key for the specified session.
@@ -163,39 +166,44 @@ public final class ZEKit {
      *
      * @param uuid Session identifier
      * @param keyBuffer Public key received from the other party
+     * @return Status code indicating SUCCESS or FAILURE
      */
-    public static native void ffi_ze_set_partner_public_key(long uuid, byte[] keyBuffer);
+    public static native int ffi_ze_set_partner_public_key(long uuid, byte[] keyBuffer);
 
     /**
      * Builds a base keypair for later key derivation.
      *
      * @param uuid Session identifier
+     * @return Status code indicating SUCCESS or FAILURE
      */
-    public static native void ffi_ze_generate_signing_keypair(long uuid);
+    public static native int ffi_ze_generate_signing_keypair(long uuid);
 
     /**
      * Derives RX and TX keys from the base keypair.
      *
      * @param uuid Session identifier
      * @param mode Connection type: 0 for SERVER, 1 for CLIENT
+     * @return Status code indicating SUCCESS or FAILURE
      */
-    public static native void ffi_ze_derive_signing_keys(long uuid, int mode);
+    public static native int ffi_ze_derive_signing_keys(long uuid, int mode);
 
     /**
      * Performs final hash key derivation from RX and TX keys.
      *
      * @param uuid Session identifier
      * @param mode Connection type: 0 for SERVER, 1 for CLIENT
+     * @return Status code indicating SUCCESS or FAILURE
      */
-    public static native void ffi_ze_finalize_signing_key(long uuid, int mode);
+    public static native int ffi_ze_finalize_signing_key(long uuid, int mode);
 
     /**
      * Sets the received public key from the other side of the connection.
      *
      * @param uuid Session identifier
      * @param keyBuffer Public key received from the other party
+     * @return Status code indicating SUCCESS or FAILURE
      */
-    public static native void ffi_ze_set_signing_public_key(long uuid, byte[] keyBuffer);
+    public static native int ffi_ze_set_signing_public_key(long uuid, byte[] keyBuffer);
 
     /**
      * Retrieves the generated base public key from the keypair.
@@ -221,6 +229,7 @@ public final class ZEKit {
      *
      * @param uuid Session identifier
      * @param messageBuffer Encrypted message containing symmetric key
+     * @return Status code indicating SUCCESS or FAILURE
      */
-    public static native void ffi_ze_process_key_exchange(long uuid, byte[] messageBuffer);
+    public static native int ffi_ze_process_key_exchange(long uuid, byte[] messageBuffer);
 }
