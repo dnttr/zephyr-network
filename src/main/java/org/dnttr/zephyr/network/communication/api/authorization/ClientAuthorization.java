@@ -35,7 +35,13 @@ public class ClientAuthorization extends Authorization {
             var receivedMessage = (SessionPublicPacket) msg0;
             var responseKey = new SessionPublicPacket(this.getPublicKeyForAuth(context));
 
-            Security.setPartnerPublicKey(context.getUuid(), receivedMessage.getPublicKey());
+            boolean isPartnerPublicKeySet = Security.setPartnerPublicKey(context.getUuid(), receivedMessage.getPublicKey());
+
+            if (!isPartnerPublicKeySet) {
+                context.restrict("Unable to set partner public key");
+                return;
+            }
+
             context.getChannel().writeAndFlush(responseKey);
 
             this.getBus().call(new ConnectionInitialPublicKeyExchangedEvent(context));
@@ -50,7 +56,12 @@ public class ClientAuthorization extends Authorization {
             var receivedMessage = (SessionPublicPacket) msg0;
             var baseSigningKey = Security.getBaseSigningKey(context.getUuid());
 
-            Security.setSigningPublicKey(context.getUuid(), receivedMessage.getPublicKey());
+            boolean isSigningPublicKeySet = Security.setSigningPublicKey(context.getUuid(), receivedMessage.getPublicKey());
+
+            if (!isSigningPublicKeySet) {
+                context.restrict("Unable to set signing public key");
+                return;
+            }
 
             if (baseSigningKey.isEmpty()) {
                 context.restrict("Unable to get public key for signing.");
@@ -60,8 +71,19 @@ public class ClientAuthorization extends Authorization {
 
             var responseKey = new SessionPublicPacket(baseSigningKey.get());
 
-            Security.deriveSigningKeyPair(context.getUuid(), Security.SideType.CLIENT);
-            Security.finalizeSigningKeyPair(context.getUuid(), Security.SideType.CLIENT);
+            boolean isSigningKeyPairDerived = Security.deriveSigningKeyPair(context.getUuid(), Security.SideType.CLIENT);
+
+            if (!isSigningKeyPairDerived) {
+                context.restrict("Unable to derive key pair for signing.");
+                return;
+            }
+
+            boolean isSigningKeyPairFinalized = Security.finalizeSigningKeyPair(context.getUuid(), Security.SideType.CLIENT);
+
+            if (!isSigningKeyPairFinalized) {
+                context.restrict("Unable to finalize signing key pair for signing.");
+                return;
+            }
 
             context.getChannel().writeAndFlush(responseKey);
             this.getBus().call(new ConnectionSigningKeysExchangedEvent(context));
@@ -103,7 +125,13 @@ public class ClientAuthorization extends Authorization {
             var receivedMessage = (SessionPrivatePacket) msg0;
             var responseState = new SessionStatePacket(SessionStatePacket.State.REGISTER_FINISH.getValue());
 
-            Security.processKeyExchange(context.getUuid(), receivedMessage.getKey());
+            boolean isMessageProcessed = Security.processKeyExchange(context.getUuid(), receivedMessage.getKey());
+
+            if (!isMessageProcessed) {
+                context.restrict("Unable to process key exchange");
+                return;
+            }
+
             context.setEncryptionType(SYMMETRIC);
 
             this.getObserverManager().observe(SessionStatePacket.class, Direction.OUTBOUND, context).thenAccept(_ -> {
@@ -111,7 +139,6 @@ public class ClientAuthorization extends Authorization {
 
                 this.getBus().call(new ConnectionReadyEvent(context));
             });
-
             context.getChannel().writeAndFlush(responseState);
         });
     }
