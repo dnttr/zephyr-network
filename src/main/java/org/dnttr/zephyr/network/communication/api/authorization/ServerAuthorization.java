@@ -60,6 +60,8 @@ public class ServerAuthorization extends Authorization {
             SessionPublicPacket response = (SessionPublicPacket) message;
             Security.setPartnerPublicKey(context.getUuid(), response.getPublicKey());
 
+            this.getBus().call(new ConnectionThirdStageEvent(context));
+
             Optional<byte[]> baseSigningKey = Security.getBaseSigningKey(context.getUuid());
             if (baseSigningKey.isEmpty()) {
                 context.restrict("Unable to get public key for signing.");
@@ -69,8 +71,6 @@ public class ServerAuthorization extends Authorization {
 
             SessionPublicPacket publicHashPacket = new SessionPublicPacket(baseSigningKey.get());
             context.getChannel().writeAndFlush(publicHashPacket);
-
-            this.getBus().call(new ConnectionThirdStageEvent(context));
         });
     }
 
@@ -118,11 +118,12 @@ public class ServerAuthorization extends Authorization {
                     return;
                 }
 
+                this.getBus().call(new ConnectionFifthStageEvent(context));
+
                 SessionPrivatePacket privatePacket = new SessionPrivatePacket(keyExchange.get());
                 context.getChannel().writeAndFlush(privatePacket);
                 context.setEncryptionType(Security.EncryptionMode.SYMMETRIC);
 
-                this.getBus().call(new ConnectionFifthStageEvent(context));
             }
         });
     }

@@ -18,8 +18,6 @@ public abstract class Authorization {
     private final EventBus bus;
 
     public Authorization(final EventBus bus, ObserverManager manager) {
-        bus.register(this);
-
         this.bus = bus;
         this.observerManager = manager;
     }
