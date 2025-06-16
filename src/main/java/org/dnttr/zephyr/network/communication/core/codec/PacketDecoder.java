@@ -37,11 +37,15 @@ public class PacketDecoder extends ByteToMessageDecoder {
 
             int totalPacketLength = hashSize + contentSize;
 
+            if (totalPacketLength > Constants.MAX_LENGTH) {
+                ctx.channel().disconnect();
+                return;
+            }
+
             DecoderUtils.validate(ctx, packetId, hashSize, contentSize);
 
-            if (buffer.readableBytes() < totalPacketLength) {
-                buffer.resetReaderIndex();
-                return;
+            if (buffer.readableBytes() > Constants.MAX_LENGTH) {
+                ctx.channel().disconnect();
             }
 
             try {
