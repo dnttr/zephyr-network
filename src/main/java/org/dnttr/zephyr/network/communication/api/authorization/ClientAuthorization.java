@@ -13,8 +13,6 @@ import org.dnttr.zephyr.network.protocol.packets.authorization.SessionNoncePacke
 import org.dnttr.zephyr.network.protocol.packets.authorization.SessionPrivatePacket;
 import org.dnttr.zephyr.network.protocol.packets.authorization.SessionPublicPacket;
 
-import java.util.Optional;
-
 import static org.dnttr.zephyr.network.bridge.Security.EncryptionMode.SYMMETRIC;
 
 /**
@@ -29,15 +27,16 @@ public class ClientAuthorization extends Authorization {
 
     @EventSubscriber
     public void onEstablished(ConnectionEstablishedEvent event) {
-        ChannelContext context = event.getContext();
+        var context = event.getContext();
 
         context.getChannel().writeAndFlush(new SessionStatePacket(SessionStatePacket.State.REGISTER_REQUEST.getValue()));
 
-        this.getObserverManager().observe(SessionPublicPacket.class, Direction.INBOUND, context).thenAccept(message -> {
-            SessionPublicPacket response = (SessionPublicPacket) message;
+        this.getObserverManager().observe(SessionPublicPacket.class, Direction.INBOUND, context).thenAccept(msg0 -> {
+            var receivedMessage = (SessionPublicPacket) msg0;
+            var responseKey = new SessionPublicPacket(this.getPublicKeyForAuth(context));
 
-            Security.setPartnerPublicKey(context.getUuid(), response.getPublicKey());
-            context.getChannel().writeAndFlush(new SessionPublicPacket(this.getPublicKeyForAuth(context)));
+            Security.setPartnerPublicKey(context.getUuid(), receivedMessage.getPublicKey());
+            context.getChannel().writeAndFlush(responseKey);
 
             this.getBus().call(new ConnectionInitialPublicKeyExchangedEvent(context));
         });
@@ -45,25 +44,26 @@ public class ClientAuthorization extends Authorization {
 
     @EventSubscriber
     public void onInitialPublicKeyExchanged(ConnectionInitialPublicKeyExchangedEvent event) {
-        ChannelContext context = event.getContext();
+        var context = event.getContext();
 
-        this.getObserverManager().observe(SessionPublicPacket.class, Direction.INBOUND, context).thenAccept(message -> {
-            SessionPublicPacket response = (SessionPublicPacket) message;
-            Security.setSigningPublicKey(context.getUuid(), response.getPublicKey());
+        this.getObserverManager().observe(SessionPublicPacket.class, Direction.INBOUND, context).thenAccept(msg0 -> {
+            var receivedMessage = (SessionPublicPacket) msg0;
+            var baseSigningKey = Security.getBaseSigningKey(context.getUuid());
 
-            Optional<byte[]> clientKey = Security.getBaseSigningKey(context.getUuid());
+            Security.setSigningPublicKey(context.getUuid(), receivedMessage.getPublicKey());
 
-            if (clientKey.isEmpty()) {
+            if (baseSigningKey.isEmpty()) {
                 context.restrict("Unable to get public key for signing.");
 
                 return;
             }
 
+            var responseKey = new SessionPublicPacket(baseSigningKey.get());
+
             Security.deriveSigningKeyPair(context.getUuid(), Security.SideType.CLIENT);
             Security.finalizeSigningKeyPair(context.getUuid(), Security.SideType.CLIENT);
 
-            context.getChannel().writeAndFlush(new SessionPublicPacket(clientKey.get()));
-
+            context.getChannel().writeAndFlush(responseKey);
             this.getBus().call(new ConnectionSigningKeysExchangedEvent(context));
         });
     }
