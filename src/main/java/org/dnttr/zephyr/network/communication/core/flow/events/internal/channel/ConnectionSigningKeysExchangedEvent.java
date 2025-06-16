@@ -1,4 +1,4 @@
-package org.dnttr.zephyr.network.communication.core.flow.events.channel;
+package org.dnttr.zephyr.network.communication.core.flow.events.internal.channel;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +11,7 @@ import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 
 @Getter
 @RequiredArgsConstructor
-public class ConnectionHandshakeComplete extends Event {
+public class ConnectionSigningKeysExchangedEvent extends Event {
 
     private final ChannelContext context;
 }

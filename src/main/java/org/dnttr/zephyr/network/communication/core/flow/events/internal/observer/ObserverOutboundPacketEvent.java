@@ -1,4 +1,4 @@
-package org.dnttr.zephyr.network.communication.core.flow.events.packet;
+package org.dnttr.zephyr.network.communication.core.flow.events.internal.observer;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +12,7 @@ import org.dnttr.zephyr.network.protocol.Packet;
 
 @Getter
 @RequiredArgsConstructor
-public final class PacketSentEvent extends Event {
+public final class ObserverOutboundPacketEvent extends Event {
 
     private final Packet packet;
     private final ChannelContext channelContext;

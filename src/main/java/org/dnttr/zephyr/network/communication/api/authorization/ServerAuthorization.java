@@ -4,7 +4,8 @@ import org.dnttr.zephyr.event.EventBus;
 import org.dnttr.zephyr.event.EventSubscriber;
 import org.dnttr.zephyr.network.bridge.Security;
 import org.dnttr.zephyr.network.communication.core.flow.Authorization;
-import org.dnttr.zephyr.network.communication.core.flow.events.channel.*;
+import org.dnttr.zephyr.network.communication.core.flow.events.internal.channel.*;
+import org.dnttr.zephyr.network.communication.core.flow.events.session.SessionEstablishedEvent;
 import org.dnttr.zephyr.network.communication.core.managers.ObserverManager;
 import org.dnttr.zephyr.network.communication.core.packet.processor.Direction;
 import org.dnttr.zephyr.network.protocol.packets.SessionStatePacket;
@@ -165,7 +166,7 @@ public class ServerAuthorization extends Authorization {
             if (SessionStatePacket.State.from(receivedMessage.getState()) == SessionStatePacket.State.REGISTER_FINISH) {
                 context.setReady(true);
 
-                this.getBus().call(new ConnectionReadyEvent(context));
+                this.getBus().call(new SessionEstablishedEvent(context.getConsumer()));
             } else {
                 context.restrict("Invalid session state.");
             }

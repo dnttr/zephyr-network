@@ -5,10 +5,9 @@ import org.dnttr.zephyr.network.communication.api.ISession;
 import org.dnttr.zephyr.network.communication.api.authorization.ClientAuthorization;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelController;
-import org.dnttr.zephyr.network.communication.core.flow.events.channel.ConnectionEstablishedEvent;
+import org.dnttr.zephyr.network.communication.core.flow.events.internal.channel.ConnectionEstablishedEvent;
 import org.dnttr.zephyr.network.communication.core.managers.ObserverManager;
 import org.dnttr.zephyr.network.communication.core.packet.processor.Transformer;
-import org.dnttr.zephyr.network.protocol.Packet;
 import org.dnttr.zephyr.network.protocol.packets.SessionStatePacket;
 import org.dnttr.zephyr.network.protocol.packets.authorization.SessionNoncePacket;
 import org.dnttr.zephyr.network.protocol.packets.authorization.SessionPrivatePacket;
@@ -25,11 +24,12 @@ import org.jetbrains.annotations.NotNull;
 public final class ClientChannelController extends ChannelController {
 
     public ClientChannelController(ISession session, EventBus eventBus, ObserverManager observerManager, Transformer transformer) {
-        super(session, eventBus, observerManager, transformer);
+        super(eventBus, observerManager, transformer);
 
         this.addPackets(SessionStatePacket.class, SessionPrivatePacket.class, SessionPublicPacket.class, SessionNoncePacket.class);
         this.getEventBus().register(new ClientAuthorization(this.getEventBus(), this.getObserverManager()));
         this.getEventBus().register(this);
+        this.getEventBus().register(session);
     }
 
     @Override
@@ -40,10 +40,5 @@ public final class ClientChannelController extends ChannelController {
         context.getChannel().writeAndFlush(packet);
 
         super.fireActive(context);
-    }
-
-    @Override
-    public void fireRead(@NotNull ChannelContext context, @NotNull Packet msg) {
-        super.fireRead(context, msg);
     }
 }

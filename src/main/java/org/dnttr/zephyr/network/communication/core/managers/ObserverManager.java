@@ -4,8 +4,8 @@ import org.dnttr.zephyr.event.EventBus;
 import org.dnttr.zephyr.event.EventSubscriber;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.flow.Observer;
-import org.dnttr.zephyr.network.communication.core.flow.events.packet.PacketReceivedEvent;
-import org.dnttr.zephyr.network.communication.core.flow.events.packet.PacketSentEvent;
+import org.dnttr.zephyr.network.communication.core.flow.events.internal.observer.ObserverInboundPacketEvent;
+import org.dnttr.zephyr.network.communication.core.flow.events.internal.observer.ObserverOutboundPacketEvent;
 import org.dnttr.zephyr.network.protocol.Packet;
 import org.dnttr.zephyr.network.communication.core.packet.processor.Direction;
 import org.jetbrains.annotations.NotNull;
@@ -40,12 +40,12 @@ public final class ObserverManager {
     }
 
     @EventSubscriber
-    public void onPacketReceived(PacketReceivedEvent ev) {
+    public void onPacketReceived(ObserverInboundPacketEvent ev) {
         this.handle(ev.getPacket(), ev.getChannelContext(), Direction.INBOUND);
     }
 
     @EventSubscriber
-    public void onPacketSent(PacketSentEvent ev) {
+    public void onPacketSent(ObserverOutboundPacketEvent ev) {
         this.handle(ev.getPacket(), ev.getChannelContext(), Direction.OUTBOUND);
     }
 

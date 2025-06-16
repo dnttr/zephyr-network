@@ -5,8 +5,8 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.RequiredArgsConstructor;
 import org.dnttr.zephyr.event.EventBus;
 import org.dnttr.zephyr.network.bridge.Security;
-import org.dnttr.zephyr.network.communication.core.flow.events.packet.PacketReceivedEvent;
-import org.dnttr.zephyr.network.communication.core.flow.events.packet.PacketSentEvent;
+import org.dnttr.zephyr.network.communication.core.flow.events.internal.observer.ObserverInboundPacketEvent;
+import org.dnttr.zephyr.network.communication.core.flow.events.internal.observer.ObserverOutboundPacketEvent;
 import org.dnttr.zephyr.network.communication.core.packet.Carrier;
 import org.dnttr.zephyr.network.communication.core.packet.processor.Direction;
 import org.dnttr.zephyr.network.communication.core.utilities.PacketUtils;
@@ -58,7 +58,7 @@ public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
         }
 
         this.controller.fireRead(context, packet);
-        this.eventBus.call(new PacketReceivedEvent(packet, context));
+        this.eventBus.call(new ObserverInboundPacketEvent(packet, context));
     }
 
     @Override
@@ -74,7 +74,7 @@ public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
     @Override
     protected void channelInactive(ChannelContext context) throws Exception {
         if (context.isRestricted()) {
-            this.controller.fireRestriction(context);
+            this.controller.fireRestriction(context, context.getRestrictionReason());
         }
 
         this.controller.fireInactive(context);
@@ -106,7 +106,7 @@ public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
         this.controller.fireWrite(context, input);
 
         Carrier carrier = (Carrier) this.controller.getTransformer().transform(Direction.OUTBOUND, input, context);
-        this.eventBus.call(new PacketSentEvent(input, context));
+        this.eventBus.call(new ObserverOutboundPacketEvent(input, context));
 
         return carrier;
     }

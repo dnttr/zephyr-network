@@ -4,7 +4,10 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.dnttr.zephyr.event.EventBus;
-import org.dnttr.zephyr.network.communication.api.ISession;
+import org.dnttr.zephyr.network.communication.core.flow.events.packet.PacketInboundEvent;
+import org.dnttr.zephyr.network.communication.core.flow.events.packet.PacketOutboundEvent;
+import org.dnttr.zephyr.network.communication.core.flow.events.session.SessionRestrictedEvent;
+import org.dnttr.zephyr.network.communication.core.flow.events.session.SessionTerminatedEvent;
 import org.dnttr.zephyr.network.communication.core.managers.ObserverManager;
 import org.dnttr.zephyr.network.communication.core.packet.processor.Transformer;
 import org.dnttr.zephyr.network.protocol.Data;
@@ -21,8 +24,6 @@ import java.util.Arrays;
 @ApiStatus.OverrideOnly
 @RequiredArgsConstructor
 public class ChannelController {
-
-    private final ISession session;
 
     @Getter(AccessLevel.PROTECTED)
     private final EventBus eventBus;
@@ -46,23 +47,19 @@ public class ChannelController {
             return;
         }
 
-        this.session.onRead(context.getConsumer(), msg);
+        this.eventBus.call(new PacketInboundEvent(context.getConsumer(), msg));
     }
 
     public void fireReadComplete(@NotNull ChannelContext context) {
         if (!context.isReady()) {
             return;
         }
-
-        this.session.onReadComplete(context.getConsumer());
     }
 
     public void fireActive(@NotNull ChannelContext context) {
         if (!context.isReady()) {
             return;
         }
-
-        this.session.onActive(context.getConsumer());
     }
 
     public void fireInactive(@NotNull ChannelContext context) {
@@ -70,15 +67,13 @@ public class ChannelController {
             return;
         }
 
-        this.session.onInactive(context.getConsumer());
+        this.eventBus.call(new SessionTerminatedEvent(context.getConsumer()));
     }
 
     public void fireWrite(@NotNull ChannelContext context, @NotNull Packet msg) {
         if (!context.isReady()) {
             return;
         }
-
-        this.session.onWrite(context.getConsumer(), msg);
     }
 
     public void fireWriteComplete(@NotNull ChannelContext context, @NotNull Packet msg) {
@@ -86,10 +81,14 @@ public class ChannelController {
             return;
         }
 
-        this.session.onWriteComplete(context.getConsumer(), msg);
+        this.eventBus.call(new PacketOutboundEvent(context.getConsumer(), msg));
     }
 
-    public void fireRestriction(@NotNull ChannelContext context) {
-        this.session.onRestriction(context.getConsumer());
+    public void fireRestriction(@NotNull ChannelContext context, String reason) {
+        if (!context.isReady()) {
+            return;
+        }
+
+        this.eventBus.call(new SessionRestrictedEvent(context.getConsumer(), reason));
     }
 }

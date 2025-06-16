@@ -28,10 +28,13 @@ public final class ChannelContext {
     private boolean ready;
     private boolean hash;
 
+    private String restrictionReason;
+
     public ChannelContext(Channel channel) {
         this.channel = channel;
 
         this.encryptionType = Security.EncryptionMode.NONE;
+        this.restrictionReason = "Not restricted";
         this.uuid = Security.createSession();
 
         Security.generateSigningKeyPair(this.uuid);
@@ -49,8 +52,8 @@ public final class ChannelContext {
     }
 
     public void restrict(String reason) {
-        System.out.println(reason);
         this.restricted = true;
+        this.restrictionReason = reason;
 
         this.channel.disconnect();
     }

@@ -27,10 +27,6 @@ public final class ContextRegistry {
         return context;
     }
 
-    public void unregister(String identity) {
-        this.contexts.remove(identity);
-    }
-
     public void unregister(Channel channel) {
         this.contexts.remove(channel.id().asShortText());
     }

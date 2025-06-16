@@ -1,4 +1,4 @@
-package org.dnttr.zephyr.network.communication.core.flow.events.channel;
+package org.dnttr.zephyr.network.communication.core.flow.events.internal.channel;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
