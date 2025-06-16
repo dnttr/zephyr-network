@@ -4,7 +4,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.dnttr.zephyr.event.EventBus;
-import org.dnttr.zephyr.network.communication.api.ISession;
+import org.dnttr.zephyr.network.communication.api.Parent;
 
 import java.net.InetSocketAddress;
 
@@ -22,9 +22,9 @@ public abstract class Worker {
     protected final Environment environment;
     protected final NioEventLoopGroup boss;
 
-    private final ISession session;
+    private final Parent session;
 
-    public Worker(EventBus eventBus, InetSocketAddress address, ISession session) {
+    public Worker(EventBus eventBus, InetSocketAddress address, Parent session) {
         instance = this;
 
         this.eventBus = eventBus;
@@ -41,7 +41,7 @@ public abstract class Worker {
         this.construct(this.session);
     }
 
-    protected abstract void construct(ISession session);
+    protected abstract void construct(Parent session);
 
     protected abstract void destroy();
 }

@@ -6,27 +6,27 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import lombok.SneakyThrows;
 import org.dnttr.zephyr.event.EventBus;
+import org.dnttr.zephyr.network.communication.api.Parent;
 import org.dnttr.zephyr.network.communication.api.controllers.ClientChannelController;
 import org.dnttr.zephyr.network.communication.core.managers.ObserverManager;
 import org.dnttr.zephyr.network.communication.core.packet.processor.Transformer;
 import org.dnttr.zephyr.network.loader.core.Worker;
-import org.dnttr.zephyr.network.communication.api.ISession;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelHandler;
-import org.dnttr.zephyr.network.management.client.Session;
+import org.dnttr.zephyr.network.management.client.Child;
 
 import java.net.InetSocketAddress;
 
 public class Client extends Worker {
 
     public Client(EventBus eventBus, InetSocketAddress socketAddress) {
-        super(eventBus, socketAddress, new Session());
+        super(eventBus, socketAddress, new Child());
 
         this.environment.execute();
     }
 
     @SneakyThrows
     @Override
-    protected void construct(ISession session) {
+    protected void construct(Parent session) {
         Bootstrap bootstrap = new Bootstrap();
 
         ClientChannelController clientChannelController = new ClientChannelController(session, eventBus, new ObserverManager(this.eventBus), new Transformer());

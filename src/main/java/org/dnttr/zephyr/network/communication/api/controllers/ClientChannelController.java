@@ -1,7 +1,7 @@
 package org.dnttr.zephyr.network.communication.api.controllers;
 
 import org.dnttr.zephyr.event.EventBus;
-import org.dnttr.zephyr.network.communication.api.ISession;
+import org.dnttr.zephyr.network.communication.api.Parent;
 import org.dnttr.zephyr.network.communication.api.authorization.ClientAuthorization;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelController;
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class ClientChannelController extends ChannelController {
 
-    public ClientChannelController(ISession session, EventBus eventBus, ObserverManager observerManager, Transformer transformer) {
+    public ClientChannelController(Parent session, EventBus eventBus, ObserverManager observerManager, Transformer transformer) {
         super(eventBus, observerManager, transformer);
 
         this.addPackets(SessionStatePacket.class, SessionPrivatePacket.class, SessionPublicPacket.class, SessionNoncePacket.class);
