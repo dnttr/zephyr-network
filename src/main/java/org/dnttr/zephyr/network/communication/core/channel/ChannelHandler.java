@@ -1,5 +1,7 @@
 package org.dnttr.zephyr.network.communication.core.channel;
 
+import com.github.benmanes.caffeine.cache.AsyncCache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.RequiredArgsConstructor;
 import org.dnttr.zephyr.event.EventBus;
 import org.dnttr.zephyr.network.bridge.Security;
@@ -10,7 +12,10 @@ import org.dnttr.zephyr.network.communication.core.packet.processor.Direction;
 import org.dnttr.zephyr.network.communication.core.utilities.PacketUtils;
 import org.dnttr.zephyr.network.protocol.Packet;
 import org.dnttr.zephyr.network.protocol.packets.authorization.SessionNoncePacket;
+import org.jetbrains.annotations.Nullable;
 
+import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.Optional;
 
 /**
@@ -23,6 +28,8 @@ public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
     private final EventBus eventBus;
     private final ChannelController controller;
 
+    private final AsyncCache<ByteBuffer, Boolean> nonces =  Caffeine.newBuilder().expireAfterWrite(Duration.ofSeconds(25)).buildAsync();
+
     @Override
     protected void channelRead(ChannelContext context, Carrier input) throws Exception {
         Packet packet = (Packet) this.controller.getTransformer().transform(Direction.INBOUND, input, context);
@@ -34,7 +41,16 @@ public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
 
         if (context.getEncryptionType() == Security.EncryptionMode.SYMMETRIC) {
             if (packet instanceof SessionNoncePacket noncePacket) {
-                Security.setNonce(context.getUuid(), Security.EncryptionMode.SYMMETRIC, noncePacket.getNonce());
+                byte[] nonce = noncePacket.getNonce();
+
+                if (this.isNoncePresent(nonce)) {
+                    context.restrict("Such nonce is already in use.");
+                    return;
+                }
+
+                this.recordNonce(nonce);
+
+                Security.setNonce(context.getUuid(), Security.EncryptionMode.SYMMETRIC, nonce);
             }
         }
 
@@ -62,16 +78,23 @@ public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
     }
 
     @Override
-    protected Carrier write(ChannelContext context, Packet input) throws Exception {
+    protected @Nullable Carrier write(ChannelContext context, Packet input) throws Exception {
         if (context.getEncryptionType() == Security.EncryptionMode.SYMMETRIC) {
             boolean isNonce = input instanceof SessionNoncePacket;
 
             if (!isNonce) {
                 Security.buildNonce(context.getUuid(), Security.EncryptionMode.SYMMETRIC);
-                Optional<byte[]> nonce = Security.getNonce(context.getUuid(), Security.EncryptionMode.SYMMETRIC);
+                Optional<byte[]> nonceOpt = Security.getNonce(context.getUuid(), Security.EncryptionMode.SYMMETRIC);
 
-                if (nonce.isPresent()) {
-                    SessionNoncePacket noncePacket = new SessionNoncePacket(Security.EncryptionMode.SYMMETRIC.getValue(), nonce.get());
+                if (nonceOpt.isPresent()) {
+                    byte[] nonce = nonceOpt.get();
+
+                    if (this.isNoncePresent(nonce)) {
+                        context.restrict("Such nonce is already in use.");
+                        return null;
+                    }
+
+                    SessionNoncePacket noncePacket = new SessionNoncePacket(Security.EncryptionMode.SYMMETRIC.getValue(), nonce);
                     context.getChannel().writeAndFlush(noncePacket);
                 }
             }
@@ -92,5 +115,17 @@ public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
         }
 
         this.controller.fireWriteComplete(context, input);
+    }
+
+    private void recordNonce(byte[] nonce) {
+        ByteBuffer key = ByteBuffer.wrap(nonce.clone());
+
+        this.nonces.synchronous().put(key, Boolean.TRUE);
+    }
+
+    private boolean isNoncePresent(byte[] nonce) {
+        ByteBuffer key = ByteBuffer.wrap(nonce);
+
+        return nonces.synchronous().getIfPresent(key) != null;
     }
 }
