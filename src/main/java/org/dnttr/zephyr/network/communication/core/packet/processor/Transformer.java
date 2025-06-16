@@ -6,13 +6,20 @@ import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.packet.Carrier;
 import org.dnttr.zephyr.network.communication.core.packet.processor.impl.SecureProcessor;
 import org.dnttr.zephyr.network.communication.core.packet.processor.impl.StandardProcessor;
+import org.dnttr.zephyr.network.protocol.Data;
 import org.dnttr.zephyr.network.protocol.Packet;
+import org.dnttr.zephyr.network.protocol.packets.SessionStatePacket;
+import org.dnttr.zephyr.network.protocol.packets.authorization.SessionNoncePacket;
+import org.dnttr.zephyr.network.protocol.packets.authorization.SessionPrivatePacket;
+import org.dnttr.zephyr.network.protocol.packets.authorization.SessionPublicPacket;
+import org.dnttr.zephyr.network.protocol.packets.client.ClientAvailabilityPacket;
 import org.dnttr.zephyr.serializer.Serializer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
-import java.util.IdentityHashMap;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -22,7 +29,7 @@ import java.util.Objects;
 public class Transformer {
 
     @Getter
-    private final IdentityHashMap<Integer, Class<?>> packets;
+    private final HashMap<Integer, Class<?>> packets;
 
     private final SecureProcessor secureProcessor;
     private final StandardProcessor standardProcessor;
@@ -30,7 +37,21 @@ public class Transformer {
     private final Integrity integrity;
 
     public Transformer() {
-        this.packets = new IdentityHashMap<>();
+        this.packets = new HashMap<>();
+
+        List<Class<? extends Packet>> packetClasses = List.of(
+                SessionStatePacket.class,
+                SessionPrivatePacket.class,
+                SessionPublicPacket.class,
+                SessionNoncePacket.class,
+                ClientAvailabilityPacket.class
+        );
+
+        packetClasses.stream().filter(klass -> klass.isAnnotationPresent(Data.class)).forEach(klass -> {
+            Data data = klass.getDeclaredAnnotation(Data.class);
+
+            this.packets.put(data.identity(), klass);
+        });
 
         this.secureProcessor = new SecureProcessor();
         this.standardProcessor = new StandardProcessor();

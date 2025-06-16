@@ -15,7 +15,7 @@ import static org.dnttr.zephyr.network.protocol.Constants.VER_1;
 @Getter
 @Serializable
 @Data(identity = -0x3, protocol = VER_1)
-public class SessionNoncePacket extends Packet {
+public final class SessionNoncePacket extends Packet {
 
     @Address(address = "nonceMode")
     private final int mode;

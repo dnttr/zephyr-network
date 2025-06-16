@@ -15,7 +15,7 @@ import org.dnttr.zephyr.network.protocol.Packet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author dnttr
@@ -34,11 +34,11 @@ public class ChannelController {
     @Getter(AccessLevel.PACKAGE)
     private final Transformer transformer;
 
-    @SafeVarargs
-    public final void addPackets(@NotNull Class<? extends Packet>... packets) {
-        Arrays.stream(packets).takeWhile(packet -> packet.isAnnotationPresent(Data.class)).forEach(packet -> {
-            Data data = packet.getDeclaredAnnotation(Data.class);
-            this.getTransformer().getPackets().put(data.identity(), packet);
+    public final void addPackets(@NotNull List<Class<? extends Packet>> packetClasses) {
+        packetClasses.stream().filter(klass -> klass.isAnnotationPresent(Data.class)).forEach(klass -> {
+            Data data = klass.getDeclaredAnnotation(Data.class);
+
+            this.getTransformer().getPackets().put(data.identity(), klass);
         });
     }
 

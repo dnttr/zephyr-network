@@ -3,11 +3,12 @@ package org.dnttr.zephyr.network.management.client;
 import org.dnttr.zephyr.event.EventSubscriber;
 import org.dnttr.zephyr.network.communication.api.Parent;
 import org.dnttr.zephyr.network.communication.core.flow.events.session.SessionEstablishedEvent;
+import org.dnttr.zephyr.network.protocol.packets.client.ClientAvailabilityPacket;
 
 public class Child extends Parent {
 
     @EventSubscriber
     public void onSessionEstablished(final SessionEstablishedEvent event) {
-        System.out.println("Session Established");
+        event.getConsumer().send(new ClientAvailabilityPacket(true));
     }
 }

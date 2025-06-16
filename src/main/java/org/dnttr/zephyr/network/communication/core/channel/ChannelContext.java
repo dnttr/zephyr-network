@@ -51,7 +51,7 @@ public final class ChannelContext {
                 .newBuilder()
                 .expireAfterWrite(Duration.ofSeconds(25))
                 .buildAsync();
-        
+
         Security.generateSigningKeyPair(this.uuid);
 
         this.consumer = new Consumer() {
