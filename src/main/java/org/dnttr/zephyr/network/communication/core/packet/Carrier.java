@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
  * @author dnttr
  */
 
-public record Carrier(int version, int identity, int hashSize, int contentSize, byte[] hash, byte[] content) {
+public record Carrier(int version, int identity, int hashSize, int contentSize, long timestamp, byte[] hash, byte[] content) {
 
     @Override
     public @NotNull String toString() {

@@ -34,6 +34,7 @@ public class PacketDecoder extends ByteToMessageDecoder {
             int packetId = buffer.readInt();
             int hashSize = buffer.readInt();
             int contentSize = buffer.readInt();
+            long timestamp = buffer.readLong();
 
             int totalPacketLength = hashSize + contentSize;
 
@@ -42,7 +43,7 @@ public class PacketDecoder extends ByteToMessageDecoder {
                 return;
             }
 
-            DecoderUtils.validate(ctx, packetId, hashSize, contentSize);
+            DecoderUtils.validate(ctx, packetId, hashSize, contentSize, timestamp);
 
             if (buffer.readableBytes() < totalPacketLength) {
                 buffer.resetReaderIndex();
@@ -50,7 +51,7 @@ public class PacketDecoder extends ByteToMessageDecoder {
             }
 
             try {
-                Carrier carrier = DecoderUtils.split(version, packetId, hashSize, contentSize, buffer);
+                Carrier carrier = DecoderUtils.split(version, packetId, hashSize, contentSize, timestamp, buffer);
 
                 objects.add(carrier);
             } catch (Exception e) {

@@ -61,7 +61,9 @@ public class Transformer {
                     byte[] result = carrier.content();
 
                     if (carrier.hashSize() != 0 && context.isHash()) {
-                        boolean isVerified = this.integrity.verify(context, carrier);
+                        long timestamp = carrier.timestamp();
+
+                        boolean isVerified = this.integrity.verify(context, timestamp, carrier);
 
                         if (!isVerified) {
                             return null;
@@ -96,6 +98,8 @@ public class Transformer {
                     int versionId = packet.getData().protocol();
                     int packetId = packet.getData().identity();
 
+                    long timestamp = System.currentTimeMillis();
+
                     if (packetId != -0x3) {
                         processedPacket = processor.processOutbound(context, serializedPacket);
                     } else {
@@ -106,9 +110,13 @@ public class Transformer {
                         return null;
                     }
 
-                    byte[] computedHash = this.integrity.build(context, processedPacket);
+                    byte[] computedHash = this.integrity.build(context, timestamp, processedPacket);
 
-                    return new Carrier(versionId, packetId, computedHash.length, processedPacket.length, computedHash, processedPacket);
+                    if (computedHash == null) {
+                        return null;
+                    }
+
+                    return new Carrier(versionId, packetId, computedHash.length, processedPacket.length, timestamp, computedHash, processedPacket);
                 } else {
                     throw new IllegalArgumentException("Outbound processing requires a Packet type, but received: " + message.getClass().getSimpleName());
                 }

@@ -21,6 +21,7 @@ public class PacketEncoder extends MessageToByteEncoder<Carrier> {
             buffer.writeInt(carrier.identity());
             buffer.writeInt(carrier.hashSize());
             buffer.writeInt(carrier.contentSize());
+            buffer.writeLong(carrier.timestamp());
 
             if (carrier.hashSize() != 0) {
                 buffer.writeBytes(carrier.hash());
