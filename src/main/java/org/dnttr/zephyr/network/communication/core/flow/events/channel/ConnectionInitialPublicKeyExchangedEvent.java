@@ -11,7 +11,7 @@ import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 
 @Getter
 @RequiredArgsConstructor
-public class ConnectionFourthStageEvent extends Event {
+public class ConnectionInitialPublicKeyExchangedEvent extends Event {
 
     private final ChannelContext context;
 }

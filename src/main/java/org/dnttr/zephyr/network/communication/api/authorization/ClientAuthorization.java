@@ -28,7 +28,7 @@ public class ClientAuthorization extends Authorization {
     }
 
     @EventSubscriber
-    public void onConnectionEstablished(ConnectionEstablishedEvent event) {
+    public void onEstablished(ConnectionEstablishedEvent event) {
         ChannelContext context = event.getContext();
 
         context.getChannel().writeAndFlush(new SessionStatePacket(SessionStatePacket.State.REGISTER_REQUEST.getValue()));
@@ -36,25 +36,15 @@ public class ClientAuthorization extends Authorization {
         this.getObserverManager().observe(SessionPublicPacket.class, Direction.INBOUND, context).thenAccept(message -> {
             SessionPublicPacket response = (SessionPublicPacket) message;
 
-            Security.generateKeys(context.getUuid(), Security.EncryptionMode.ASYMMETRIC);
             Security.setPartnerPublicKey(context.getUuid(), response.getPublicKey());
+            context.getChannel().writeAndFlush(new SessionPublicPacket(this.getPublicKeyForAuth(context)));
 
-            Optional<byte[]> clientAuthKey = Security.getKeyPair(context.getUuid(), Security.KeyType.PUBLIC);
-
-            if (clientAuthKey.isEmpty()) {
-                context.restrict("Unable to get public key for auth.");
-                return;
-            }
-
-            SessionPublicPacket clientAuthKeyPacket = new SessionPublicPacket(clientAuthKey.get());
-            context.getChannel().writeAndFlush(clientAuthKeyPacket);
-
-            this.getBus().call(new ConnectionSecondStageEvent(context));
+            this.getBus().call(new ConnectionInitialPublicKeyExchangedEvent(context));
         });
     }
 
     @EventSubscriber
-    public void onConnectionSecondStage(ConnectionSecondStageEvent event) { //hash
+    public void onInitialPublicKeyExchanged(ConnectionInitialPublicKeyExchangedEvent event) {
         ChannelContext context = event.getContext();
 
         this.getObserverManager().observe(SessionPublicPacket.class, Direction.INBOUND, context).thenAccept(message -> {
@@ -74,23 +64,23 @@ public class ClientAuthorization extends Authorization {
 
             context.getChannel().writeAndFlush(new SessionPublicPacket(clientKey.get()));
 
-            this.getBus().call(new ConnectionThirdStageEvent(context));
+            this.getBus().call(new ConnectionSigningKeysExchangedEvent(context));
         });
     }
 
     @EventSubscriber
-    public void onConnectionThirdStage(ConnectionThirdStageEvent event) {
+    public void onSigningKeysExchanged(ConnectionSigningKeysExchangedEvent event) {
         ChannelContext context = event.getContext();
 
         this.getObserverManager().observe(SessionPublicPacket.class, Direction.OUTBOUND, context).thenAccept(_ -> {
             context.setHash(true);
 
-            this.getBus().call(new ConnectionFourthStageEvent(context));
+            this.getBus().call(new ConnectionIntegrityVerifiedEvent(context));
         });
     }
 
     @EventSubscriber
-    public void onConnectionFourthStage(ConnectionFourthStageEvent event) {
+    public void onConnectionIntegrityVerified(ConnectionIntegrityVerifiedEvent event) {
         ChannelContext context = event.getContext();
 
         this.getObserverManager().observe(SessionNoncePacket.class, Direction.INBOUND, context).thenAccept(message -> {
@@ -98,12 +88,12 @@ public class ClientAuthorization extends Authorization {
 
             Security.setNonce(context.getUuid(), Security.EncryptionMode.ASYMMETRIC,  response.getNonce());
 
-            this.getBus().call(new ConnectionFifthStageEvent(context));
+            this.getBus().call(new ConnectionHandshakeComplete(context));
         });
     }
 
     @EventSubscriber
-    public void onConnectionFifthStage(ConnectionFifthStageEvent event) {
+    public void onHandshakeComplete(ConnectionHandshakeComplete event) {
         ChannelContext context = event.getContext();
 
         context.getChannel().writeAndFlush(new SessionStatePacket(SessionStatePacket.State.REGISTER_EXCHANGE.getValue()));
@@ -114,7 +104,11 @@ public class ClientAuthorization extends Authorization {
 
             context.setEncryptionType(SYMMETRIC);
 
-            this.getObserverManager().observe(SessionStatePacket.class, Direction.OUTBOUND, context).thenAccept(_ -> context.setReady(true));
+            this.getObserverManager().observe(SessionStatePacket.class, Direction.OUTBOUND, context).thenAccept(_ -> {
+                context.setReady(true);
+
+                this.getBus().call(new ConnectionReadyEvent(context));
+            });
 
             context.getChannel().writeAndFlush(new SessionStatePacket(SessionStatePacket.State.REGISTER_FINISH.getValue()));
         });

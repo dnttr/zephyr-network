@@ -26,7 +26,7 @@ public class ServerAuthorization extends Authorization {
     }
 
     @EventSubscriber
-    public void onConnectionEstablished(ConnectionEstablishedEvent event) {
+    public void onEstablished(ConnectionEstablishedEvent event) {
         ChannelContext context = event.getContext();
 
         this.getObserverManager().observe(SessionStatePacket.class, Direction.INBOUND, context).thenAccept(message -> {
@@ -34,18 +34,10 @@ public class ServerAuthorization extends Authorization {
 
             if (SessionStatePacket.State.from(packet.getState()) == SessionStatePacket.State.REGISTER_REQUEST) {
                 Security.buildNonce(context.getUuid(), Security.EncryptionMode.ASYMMETRIC);
-                Security.generateKeys(context.getUuid(), Security.EncryptionMode.ASYMMETRIC);
-                Optional<byte[]> authPubKey = Security.getKeyPair(context.getUuid(), Security.KeyType.PUBLIC);
 
-                if (authPubKey.isEmpty()) {
-                    context.restrict("Unable to get public key for auth.");
+                context.getChannel().writeAndFlush(new SessionPublicPacket(this.getPublicKeyForAuth(context)));
 
-                    return;
-                }
-                SessionPublicPacket publicAuthPacket = new SessionPublicPacket(authPubKey.get());
-                context.getChannel().writeAndFlush(publicAuthPacket);
-
-                this.getBus().call(new ConnectionSecondStageEvent(context));
+                this.getBus().call(new ConnectionInitialPublicKeyExchangedEvent(context));
             } else {
                 context.restrict("Invalid session state.");
             }
@@ -53,14 +45,14 @@ public class ServerAuthorization extends Authorization {
     }
 
     @EventSubscriber
-    public void onConnectionSecondStage(ConnectionSecondStageEvent event) {
+    public void onInitialPublicKeyExchanged(ConnectionInitialPublicKeyExchangedEvent event) {
         ChannelContext context = event.getContext();
 
         this.getObserverManager().observe(SessionPublicPacket.class, Direction.INBOUND, context).thenAccept(message -> {
             SessionPublicPacket response = (SessionPublicPacket) message;
             Security.setPartnerPublicKey(context.getUuid(), response.getPublicKey());
 
-            this.getBus().call(new ConnectionThirdStageEvent(context));
+            this.getBus().call(new ConnectionSigningKeysExchangedEvent(context));
 
             Optional<byte[]> baseSigningKey = Security.getBaseSigningKey(context.getUuid());
             if (baseSigningKey.isEmpty()) {
@@ -75,7 +67,7 @@ public class ServerAuthorization extends Authorization {
     }
 
     @EventSubscriber
-    public void onConnectionThirdStage(ConnectionThirdStageEvent event) {
+    public void onSigningKeysExchanged(ConnectionSigningKeysExchangedEvent event) {
         ChannelContext context = event.getContext();
 
         this.getObserverManager().observe(SessionPublicPacket.class, Direction.INBOUND, context).thenAccept(msg2 -> {
@@ -98,12 +90,12 @@ public class ServerAuthorization extends Authorization {
             SessionNoncePacket noncePacket = new SessionNoncePacket(Security.EncryptionMode.ASYMMETRIC.getValue(), nonce.get());
             context.getChannel().writeAndFlush(noncePacket);
 
-            this.getBus().call(new ConnectionFourthStageEvent(context));
+            this.getBus().call(new ConnectionIntegrityVerifiedEvent(context));
         });
     }
 
     @EventSubscriber
-    public void onConnectionFourthStage(ConnectionFourthStageEvent event) {
+    public void onConnectionIntegrityVerified(ConnectionIntegrityVerifiedEvent event) {
         ChannelContext context = event.getContext();
 
         this.getObserverManager().observe(SessionStatePacket.class, Direction.INBOUND, context).thenAccept(msg3 -> {
@@ -118,7 +110,7 @@ public class ServerAuthorization extends Authorization {
                     return;
                 }
 
-                this.getBus().call(new ConnectionFifthStageEvent(context));
+                this.getBus().call(new ConnectionHandshakeComplete(context));
 
                 SessionPrivatePacket privatePacket = new SessionPrivatePacket(keyExchange.get());
                 context.getChannel().writeAndFlush(privatePacket);
@@ -129,7 +121,7 @@ public class ServerAuthorization extends Authorization {
     }
 
     @EventSubscriber
-    public void onConnectionFifthStage(ConnectionFifthStageEvent event) {
+    public void onHandshakeComplete(ConnectionHandshakeComplete event) {
         ChannelContext context = event.getContext();
 
         this.getObserverManager().observe(SessionStatePacket.class, Direction.INBOUND, context).thenAccept(msg4 -> {
@@ -137,6 +129,8 @@ public class ServerAuthorization extends Authorization {
 
             if (SessionStatePacket.State.from(packet4.getState()) == SessionStatePacket.State.REGISTER_FINISH) {
                 context.setReady(true);
+
+                this.getBus().call(new ConnectionReadyEvent(context));
             }
         });
     }
