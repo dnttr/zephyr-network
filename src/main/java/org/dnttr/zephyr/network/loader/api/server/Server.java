@@ -8,6 +8,8 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import lombok.SneakyThrows;
 import org.dnttr.zephyr.event.EventBus;
 import org.dnttr.zephyr.network.communication.api.controllers.ServerChannelController;
+import org.dnttr.zephyr.network.communication.core.managers.ObserverManager;
+import org.dnttr.zephyr.network.communication.core.packet.processor.Transformer;
 import org.dnttr.zephyr.network.loader.core.Worker;
 import org.dnttr.zephyr.network.communication.api.ISession;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelHandler;
@@ -30,8 +32,8 @@ public final class Server extends Worker {
     @Override
     protected void construct(ISession session) {
         ServerBootstrap bootstrap = new ServerBootstrap();
-        ServerChannelController controller = new ServerChannelController(session, eventBus);
-        ChannelHandler handler = new ChannelHandler(eventBus, controller);
+        ServerChannelController controller = new ServerChannelController(session, this.eventBus, new ObserverManager(this.eventBus), new Transformer());
+        ChannelHandler handler = new ChannelHandler(this.eventBus, controller);
 
         bootstrap.
                 group(this.boss, child).

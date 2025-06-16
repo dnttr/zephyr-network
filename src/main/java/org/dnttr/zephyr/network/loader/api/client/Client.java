@@ -7,6 +7,8 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import lombok.SneakyThrows;
 import org.dnttr.zephyr.event.EventBus;
 import org.dnttr.zephyr.network.communication.api.controllers.ClientChannelController;
+import org.dnttr.zephyr.network.communication.core.managers.ObserverManager;
+import org.dnttr.zephyr.network.communication.core.packet.processor.Transformer;
 import org.dnttr.zephyr.network.loader.core.Worker;
 import org.dnttr.zephyr.network.communication.api.ISession;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelHandler;
@@ -27,11 +29,13 @@ public class Client extends Worker {
     protected void construct(ISession session) {
         Bootstrap bootstrap = new Bootstrap();
 
+        ClientChannelController clientChannelController = new ClientChannelController(session, eventBus, new ObserverManager(this.eventBus), new Transformer());
+
         bootstrap.
                 group(this.boss).
                 channel(NioSocketChannel.class).
                 option(ChannelOption.SO_KEEPALIVE, true).
-                handler(new ChannelHandler(this.eventBus, new ClientChannelController(session, eventBus)));
+                handler(new ChannelHandler(this.eventBus, clientChannelController));
 
         ChannelFuture channelFuture = bootstrap.connect(getAddress()).sync();
         channelFuture.channel().closeFuture().sync();

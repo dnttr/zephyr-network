@@ -2,10 +2,9 @@ package org.dnttr.zephyr.network.communication.core.channel;
 
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.dnttr.zephyr.event.EventBus;
 import org.dnttr.zephyr.network.communication.api.ISession;
-import org.dnttr.zephyr.network.communication.core.flow.events.packet.PacketReceivedEvent;
-import org.dnttr.zephyr.network.communication.core.flow.events.packet.PacketSentEvent;
 import org.dnttr.zephyr.network.communication.core.managers.ObserverManager;
 import org.dnttr.zephyr.network.communication.core.packet.processor.Transformer;
 import org.dnttr.zephyr.network.protocol.Data;
@@ -20,6 +19,7 @@ import java.util.Arrays;
  */
 
 @ApiStatus.OverrideOnly
+@RequiredArgsConstructor
 public class ChannelController {
 
     private final ISession session;
@@ -32,14 +32,6 @@ public class ChannelController {
 
     @Getter(AccessLevel.PACKAGE)
     private final Transformer transformer;
-
-    public ChannelController(ISession session, EventBus eventBus) {
-        this.session = session;
-        this.eventBus = eventBus;
-        this.observerManager = new ObserverManager(eventBus);
-
-        this.transformer = new Transformer();
-    }
 
     @SafeVarargs
     public final void addPackets(@NotNull Class<? extends Packet>... packets) {
