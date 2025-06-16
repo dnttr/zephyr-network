@@ -26,12 +26,12 @@ public final class DecoderUtils {
     public static void validate(@NotNull ChannelHandlerContext ctx, int packetId, int hashSize, int contentSize) {
         Objects.requireNonNull(ctx);
 
-        if (contentSize <= 0) {
+        if (contentSize <= 0 || hashSize < 0) {
             ctx.channel().disconnect();
             return;
         }
 
-        if (hashSize <= 0) {
+        if (hashSize == 0) {
             if (packetId == -1 || packetId == -2) {
                 return;
             }
