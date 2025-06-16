@@ -25,10 +25,13 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
 
-    private final EventBus eventBus;
-    private final ChannelController controller;
+    private final AsyncCache<ByteBuffer, Boolean> nonces = Caffeine
+            .newBuilder()
+            .expireAfterWrite(Duration.ofSeconds(25))
+            .buildAsync();
 
-    private final AsyncCache<ByteBuffer, Boolean> nonces =  Caffeine.newBuilder().expireAfterWrite(Duration.ofSeconds(25)).buildAsync();
+    private final ChannelController controller;
+    private final EventBus eventBus;
 
     @Override
     protected void channelRead(ChannelContext context, Carrier input) throws Exception {
