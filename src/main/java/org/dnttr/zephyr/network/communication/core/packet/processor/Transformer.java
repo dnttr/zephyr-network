@@ -11,6 +11,7 @@ import org.dnttr.zephyr.serializer.Serializer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.Duration;
 import java.util.IdentityHashMap;
 import java.util.Objects;
 
@@ -60,14 +61,18 @@ public class Transformer {
                     int packetId = carrier.identity();
                     byte[] result = carrier.content();
 
-                    if (carrier.hashSize() != 0 && context.isHash()) {
-                        long timestamp = carrier.timestamp();
+                    long timestamp = carrier.timestamp();
 
+                    if (carrier.hashSize() != 0 && context.isHash()) {
                         boolean isVerified = this.integrity.verify(context, timestamp, carrier);
 
                         if (!isVerified) {
                             return null;
                         }
+                    }
+
+                    if (Math.abs(System.currentTimeMillis() - timestamp) > Duration.ofSeconds(6).toMillis()) {
+                        return null;
                     }
 
                     if (packetId != -0x3) {
