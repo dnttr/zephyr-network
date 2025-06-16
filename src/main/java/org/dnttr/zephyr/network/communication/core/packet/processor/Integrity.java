@@ -5,13 +5,11 @@ import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.packet.Carrier;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Optional;
-
 /**
  * @author dnttr
  */
 
-public class Integrity {
+public final class Integrity {
 
     public boolean verify(@NotNull ChannelContext context, @NotNull Carrier carrier) {
         if (carrier.hash() == null || carrier.content() == null) {
@@ -33,7 +31,7 @@ public class Integrity {
 
     public byte @NotNull [] build(@NotNull ChannelContext context, byte @NotNull [] packet) {
         if (context.isHash()) {
-            Optional<byte[]> computedHash = Security.sign(context.getUuid(), packet);
+            var computedHash = Security.sign(context.getUuid(), packet);
 
             if (computedHash.isEmpty()) {
                 throw new IllegalStateException("Couldn't compute hash");

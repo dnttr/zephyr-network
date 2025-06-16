@@ -3,23 +3,28 @@ package org.dnttr.zephyr.network.communication.core.packet.processor.impl;
 import org.dnttr.zephyr.network.bridge.Security;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.packet.processor.IProcessor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Optional;
+import java.util.Objects;
 
 /**
  * @author dnttr
  */
 
-public class SecureProcessor implements IProcessor {
+public final class SecureProcessor implements IProcessor {
 
     @Override
-    public byte[] processInbound(ChannelContext context, byte[] content) {
-        Security.EncryptionMode type = context.getEncryptionType();
+    public byte @Nullable [] processInbound(@NotNull ChannelContext context, byte @NotNull [] content) {
+        Objects.requireNonNull(context);
+        Objects.requireNonNull(content);
+
+        var type = context.getEncryptionType();
         byte[] decryptedContent;
 
         switch (type) {
             case ASYMMETRIC, SYMMETRIC -> {
-                Optional<byte[]> message = Security.decrypt(context.getUuid(), type, content, null);
+                var message = Security.decrypt(context.getUuid(), type, content, null);
 
                 if (message.isEmpty()) {
                     throw new SecurityException("Cannot decrypt message");
@@ -35,13 +40,16 @@ public class SecureProcessor implements IProcessor {
     }
 
     @Override
-    public byte[] processOutbound(ChannelContext context, byte[] content) {
-        Security.EncryptionMode type = context.getEncryptionType();
+    public byte @Nullable [] processOutbound(@NotNull ChannelContext context, byte @NotNull [] content) {
+        Objects.requireNonNull(context);
+        Objects.requireNonNull(content);
+
+        var type = context.getEncryptionType();
         byte[] encryptedContent;
 
         switch (type) {
             case ASYMMETRIC, SYMMETRIC -> {
-                Optional<byte[]> message = Security.encrypt(context.getUuid(), type, content, null);
+                var message = Security.encrypt(context.getUuid(), type, content, null);
                 
                 if (message.isEmpty()) {
                     throw new SecurityException("Cannot encrypt message");

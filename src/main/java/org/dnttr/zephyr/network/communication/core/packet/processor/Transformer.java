@@ -57,6 +57,10 @@ public class Transformer {
 
                     if (packetId != -0x3) {
                         result = processor.processInbound(context, carrier.content());
+
+                        if (result == null) {
+                            return null;
+                        }
                     }
 
                     var klass = this.packets.get(carrier.identity());
@@ -83,6 +87,10 @@ public class Transformer {
                         processedPacket = processor.processOutbound(context, serializedPacket);
                     } else {
                         processedPacket = serializedPacket;
+                    }
+
+                    if (processedPacket == null) {
+                        return null;
                     }
 
                     byte[] computedHash = this.integrity.build(context, processedPacket);

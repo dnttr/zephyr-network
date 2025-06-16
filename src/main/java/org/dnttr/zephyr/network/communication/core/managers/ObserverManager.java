@@ -8,6 +8,7 @@ import org.dnttr.zephyr.network.communication.core.flow.events.packet.PacketRece
 import org.dnttr.zephyr.network.communication.core.flow.events.packet.PacketSentEvent;
 import org.dnttr.zephyr.network.protocol.Packet;
 import org.dnttr.zephyr.network.communication.core.packet.processor.Direction;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
@@ -22,13 +23,13 @@ public final class ObserverManager {
 
     private final Map<Class<? extends Packet>, List<Observer>> observers;
 
-    public ObserverManager(EventBus bus) {
+    public ObserverManager(@NotNull EventBus bus) {
         this.observers = new ConcurrentHashMap<>();
 
         bus.register(this);
     }
 
-    public <T extends Packet> Observer observe(Class<T> packetClass, Direction direction, ChannelContext context)
+    public <T extends Packet> Observer observe(@NotNull Class<T> packetClass, @NotNull Direction direction, @NotNull ChannelContext context)
     {
         var observer = new Observer(packetClass, direction, context);
 
