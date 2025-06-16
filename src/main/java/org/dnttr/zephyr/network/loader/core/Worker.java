@@ -1,6 +1,7 @@
 package org.dnttr.zephyr.network.loader.core;
 
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.MultiThreadIoEventLoopGroup;
+import io.netty.channel.nio.NioIoHandler;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.dnttr.zephyr.event.EventBus;
@@ -20,7 +21,7 @@ public abstract class Worker {
     @Getter
     protected final InetSocketAddress address;
     protected final Environment environment;
-    protected final NioEventLoopGroup boss;
+    protected final MultiThreadIoEventLoopGroup boss;
 
     private final Parent session;
 
@@ -30,7 +31,7 @@ public abstract class Worker {
         this.eventBus = eventBus;
         this.address = address;
 
-        this.boss = new NioEventLoopGroup();
+        this.boss = new MultiThreadIoEventLoopGroup(1, NioIoHandler.newFactory());
         this.environment = new Environment(this);
 
         this.session = session;
