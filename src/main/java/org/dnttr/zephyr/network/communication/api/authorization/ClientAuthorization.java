@@ -43,9 +43,8 @@ public class ClientAuthorization extends Authorization {
                 return;
             }
 
-            context.getChannel().writeAndFlush(responseKey);
-
             this.getBus().call(new ConnectionInitialPublicKeyExchangedEvent(context));
+            context.getChannel().writeAndFlush(responseKey);
         });
     }
 
@@ -71,6 +70,7 @@ public class ClientAuthorization extends Authorization {
             }
 
             var responseKey = new SessionPublicPacket(baseSigningKey.get());
+            this.getBus().call(new ConnectionSigningKeysExchangedEvent(context));
 
             boolean isSigningKeyPairDerived = Security.deriveSigningKeyPair(context.getUuid(), Security.SideType.CLIENT);
 
@@ -87,7 +87,6 @@ public class ClientAuthorization extends Authorization {
             }
 
             context.getChannel().writeAndFlush(responseKey);
-            this.getBus().call(new ConnectionSigningKeysExchangedEvent(context));
         });
     }
 
@@ -99,6 +98,7 @@ public class ClientAuthorization extends Authorization {
             context.setHash(true);
 
             this.getBus().call(new ConnectionIntegrityVerifiedEvent(context));
+
         });
     }
 
