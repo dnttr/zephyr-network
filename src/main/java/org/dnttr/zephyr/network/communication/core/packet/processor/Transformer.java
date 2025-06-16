@@ -42,15 +42,16 @@ public class Transformer {
         Objects.requireNonNull(message);
         Objects.requireNonNull(context);
 
+        var type = context.getEncryptionType();
         IProcessor processor;
 
-        switch (context.getEncryptionType()) {
+        switch (type) {
             case NONE ->
                     processor = this.standardProcessor;
             case ASYMMETRIC, SYMMETRIC ->
                     processor = this.secureProcessor;
             default ->
-                    throw new IllegalArgumentException("Unrecognized cipher type: " + context.getEncryptionType());
+                    throw new IllegalArgumentException("Unrecognized cipher type: " + type);
         }
 
         switch (direction) {
