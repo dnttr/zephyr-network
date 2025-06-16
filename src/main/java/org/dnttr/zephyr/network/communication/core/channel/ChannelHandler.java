@@ -13,7 +13,6 @@ import org.dnttr.zephyr.network.protocol.packets.authorization.SessionNoncePacke
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
-import java.util.Optional;
 
 /**
  * @author dnttr
@@ -79,7 +78,7 @@ public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
 
             if (!isNonce) {
                 Security.buildNonce(context.getUuid(), Security.EncryptionMode.SYMMETRIC);
-                Optional<byte[]> nonceOpt = Security.getNonce(context.getUuid(), Security.EncryptionMode.SYMMETRIC);
+                var nonceOpt = Security.getNonce(context.getUuid(), Security.EncryptionMode.SYMMETRIC);
 
                 if (nonceOpt.isPresent()) {
                     byte[] nonce = nonceOpt.get();
@@ -113,13 +112,13 @@ public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
     }
 
     private void recordNonce(ChannelContext context, byte[] nonce) {
-        ByteBuffer key = ByteBuffer.wrap(nonce.clone());
+        var key = ByteBuffer.wrap(nonce.clone());
 
         context.getNonces().synchronous().put(key, Boolean.TRUE);
     }
 
     private boolean isNoncePresent(ChannelContext context, byte[] nonce) {
-        ByteBuffer key = ByteBuffer.wrap(nonce);
+        var key = ByteBuffer.wrap(nonce);
 
         return context.getNonces().synchronous().getIfPresent(key) != null;
     }

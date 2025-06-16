@@ -9,9 +9,12 @@ import lombok.Setter;
 import org.dnttr.zephyr.network.bridge.Security;
 import org.dnttr.zephyr.network.communication.core.Consumer;
 import org.dnttr.zephyr.network.protocol.Packet;
+import org.jetbrains.annotations.NotNull;
 
 import java.nio.ByteBuffer;
 import java.time.Duration;
+
+import static org.dnttr.zephyr.network.bridge.Security.EncryptionMode.NONE;
 
 /**
  * @author dnttr
@@ -21,10 +24,7 @@ import java.time.Duration;
 @Setter
 public final class ChannelContext {
 
-    private final AsyncCache<ByteBuffer, Boolean> nonces = Caffeine
-            .newBuilder()
-            .expireAfterWrite(Duration.ofSeconds(25))
-            .buildAsync();
+    private final AsyncCache<ByteBuffer, Boolean> nonces;
 
     private final Channel channel;
     private final Consumer consumer;
@@ -40,13 +40,18 @@ public final class ChannelContext {
 
     private String restrictionReason;
 
-    public ChannelContext(Channel channel) {
+    public ChannelContext(@NotNull Channel channel) {
         this.channel = channel;
 
-        this.encryptionType = Security.EncryptionMode.NONE;
         this.restrictionReason = "Not restricted";
-        this.uuid = Security.createSession();
+        this.encryptionType = NONE;
 
+        this.uuid = Security.createSession();
+        this.nonces = Caffeine
+                .newBuilder()
+                .expireAfterWrite(Duration.ofSeconds(25))
+                .buildAsync();
+        
         Security.generateSigningKeyPair(this.uuid);
 
         this.consumer = new Consumer() {
@@ -61,7 +66,7 @@ public final class ChannelContext {
         };
     }
 
-    public void restrict(String reason) {
+    public void restrict(@NotNull String reason) {
         this.restricted = true;
         this.restrictionReason = reason;
 

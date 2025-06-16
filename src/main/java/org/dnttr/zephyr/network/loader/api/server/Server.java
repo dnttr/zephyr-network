@@ -3,28 +3,30 @@ package org.dnttr.zephyr.network.loader.api.server;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.MultiThreadIoEventLoopGroup;
+import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import lombok.SneakyThrows;
 import org.dnttr.zephyr.event.EventBus;
 import org.dnttr.zephyr.network.communication.api.Parent;
 import org.dnttr.zephyr.network.communication.api.controllers.ServerChannelController;
+import org.dnttr.zephyr.network.communication.core.channel.ChannelHandler;
 import org.dnttr.zephyr.network.communication.core.managers.ObserverManager;
 import org.dnttr.zephyr.network.communication.core.packet.processor.Transformer;
 import org.dnttr.zephyr.network.loader.core.Worker;
-import org.dnttr.zephyr.network.communication.core.channel.ChannelHandler;
 import org.dnttr.zephyr.network.management.server.Child;
+import org.jetbrains.annotations.NotNull;
 
 import java.net.InetSocketAddress;
 
 public final class Server extends Worker {
 
-    private final NioEventLoopGroup child; //deprecated? but why the hell. LOL
+    private final MultiThreadIoEventLoopGroup child;
 
-    public Server(EventBus eventBus, InetSocketAddress socketAddress) {
+    public Server(@NotNull EventBus eventBus, @NotNull InetSocketAddress socketAddress) {
         super(eventBus, socketAddress, new Child());
 
-        this.child = new NioEventLoopGroup();
+        this.child = new MultiThreadIoEventLoopGroup(0, NioIoHandler.newFactory());
         this.environment.execute();
     }
 

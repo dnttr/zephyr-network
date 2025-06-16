@@ -69,7 +69,13 @@ public abstract class ChannelAdapter<I, O> extends ChannelInitializer<SocketChan
         public final void channelInactive(ChannelHandlerContext ctx) throws Exception {
             var registry = this.adapter.getRegistry();
 
-            this.adapter.channelInactive(registry.get(ctx.channel()));
+            ChannelContext context = registry.get(ctx.channel());
+
+            if (context == null) {
+                return;
+            }
+
+            this.adapter.channelInactive(context);
             registry.unregister(ctx.channel());
 
             super.channelInactive(ctx);
@@ -88,7 +94,7 @@ public abstract class ChannelAdapter<I, O> extends ChannelInitializer<SocketChan
 
             I in = (I) input;
             O out = this.adapter.write(context, in);
-            promise.addListener((ChannelFutureListener) channelFuture -> this.adapter.onWriteComplete(context, in, out));
+            promise.addListener((ChannelFutureListener) _ -> this.adapter.onWriteComplete(context, in, out));
 
             super.write(ctx, out, promise);
         }

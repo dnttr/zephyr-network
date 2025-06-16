@@ -17,7 +17,7 @@ import org.dnttr.zephyr.network.protocol.packets.authorization.SessionPublicPack
  * @author dnttr
  */
 
-public class ServerAuthorization extends Authorization {
+public final class ServerAuthorization extends Authorization {
 
     public ServerAuthorization(EventBus bus, ObserverManager observerManager) {
         super(bus, observerManager);

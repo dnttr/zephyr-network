@@ -23,10 +23,11 @@ import org.jetbrains.annotations.NotNull;
 
 public final class ClientChannelController extends ChannelController {
 
-    public ClientChannelController(Parent session, EventBus eventBus, ObserverManager observerManager, Transformer transformer) {
+    public ClientChannelController(@NotNull Parent session, @NotNull EventBus eventBus, @NotNull ObserverManager observerManager, @NotNull Transformer transformer) {
         super(eventBus, observerManager, transformer);
 
         this.addPackets(SessionStatePacket.class, SessionPrivatePacket.class, SessionPublicPacket.class, SessionNoncePacket.class);
+
         this.getEventBus().register(new ClientAuthorization(this.getEventBus(), this.getObserverManager()));
         this.getEventBus().register(this);
         this.getEventBus().register(session);

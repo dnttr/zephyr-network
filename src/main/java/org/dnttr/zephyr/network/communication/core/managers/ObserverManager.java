@@ -49,7 +49,7 @@ public final class ObserverManager {
         this.handle(ev.getPacket(), ev.getChannelContext(), Direction.OUTBOUND);
     }
 
-    private void handle(Packet packet, ChannelContext context, Direction direction) {
+    private void handle(@NotNull Packet packet, @NotNull ChannelContext context, @NotNull Direction direction) {
         var klass = packet.getClass();
         var observersList = observers.get(klass);
 

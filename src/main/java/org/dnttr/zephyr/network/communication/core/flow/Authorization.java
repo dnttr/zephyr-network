@@ -6,6 +6,7 @@ import org.dnttr.zephyr.event.EventBus;
 import org.dnttr.zephyr.network.bridge.Security;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.managers.ObserverManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dnttr
@@ -19,12 +20,12 @@ public abstract class Authorization {
     @Getter(AccessLevel.PROTECTED)
     private final EventBus bus;
 
-    public Authorization(final EventBus bus, final ObserverManager manager) {
+    public Authorization(final @NotNull EventBus bus, final @NotNull ObserverManager manager) {
         this.bus = bus;
         this.observerManager = manager;
     }
 
-    protected byte[] getPublicKeyForAuth(final ChannelContext context) {
+    protected byte[] getPublicKeyForAuth(@NotNull final ChannelContext context) {
         Security.generateKeys(context.getUuid(), Security.EncryptionMode.ASYMMETRIC);
         var authPubKey = Security.getKeyPair(context.getUuid(), Security.KeyType.PUBLIC);
 

@@ -19,7 +19,7 @@ import static org.dnttr.zephyr.network.bridge.Security.EncryptionMode.SYMMETRIC;
  * @author dnttr
  */
 
-public class ClientAuthorization extends Authorization {
+public final class ClientAuthorization extends Authorization {
 
     public ClientAuthorization(EventBus bus,  ObserverManager observerManager) {
         super(bus, observerManager);
