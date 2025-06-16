@@ -3,7 +3,6 @@ package org.dnttr.zephyr.network.communication.api.authorization;
 import org.dnttr.zephyr.event.EventBus;
 import org.dnttr.zephyr.event.EventSubscriber;
 import org.dnttr.zephyr.network.bridge.Security;
-import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.flow.Authorization;
 import org.dnttr.zephyr.network.communication.core.flow.events.channel.*;
 import org.dnttr.zephyr.network.communication.core.managers.ObserverManager;
@@ -12,8 +11,6 @@ import org.dnttr.zephyr.network.protocol.packets.SessionStatePacket;
 import org.dnttr.zephyr.network.protocol.packets.authorization.SessionNoncePacket;
 import org.dnttr.zephyr.network.protocol.packets.authorization.SessionPrivatePacket;
 import org.dnttr.zephyr.network.protocol.packets.authorization.SessionPublicPacket;
-
-import java.util.Optional;
 
 /**
  * @author dnttr
@@ -26,16 +23,22 @@ public class ServerAuthorization extends Authorization {
     }
 
     @EventSubscriber
-    public void onEstablished(ConnectionEstablishedEvent event) {
-        ChannelContext context = event.getContext();
+    public void onEstablished(final ConnectionEstablishedEvent event) {
+        var context = event.getContext();
 
-        this.getObserverManager().observe(SessionStatePacket.class, Direction.INBOUND, context).thenAccept(message -> {
-            SessionStatePacket packet = (SessionStatePacket) message;
+        this.getObserverManager().observe(SessionStatePacket.class, Direction.INBOUND, context).thenAccept(msg0 -> {
+            var receivedMessage = (SessionStatePacket) msg0;
 
-            if (SessionStatePacket.State.from(packet.getState()) == SessionStatePacket.State.REGISTER_REQUEST) {
-                Security.buildNonce(context.getUuid(), Security.EncryptionMode.ASYMMETRIC);
+            if (SessionStatePacket.State.from(receivedMessage.getState()) == SessionStatePacket.State.REGISTER_REQUEST) {
+                boolean isNonceBuilt = Security.buildNonce(context.getUuid(), Security.EncryptionMode.ASYMMETRIC);
 
-                context.getChannel().writeAndFlush(new SessionPublicPacket(this.getPublicKeyForAuth(context)));
+                if (!isNonceBuilt) {
+                    context.restrict("Nonce could not be built");
+                    return;
+                }
+
+                var responseKey = new SessionPublicPacket(this.getPublicKeyForAuth(context));
+                context.getChannel().writeAndFlush(responseKey);
 
                 this.getBus().call(new ConnectionInitialPublicKeyExchangedEvent(context));
             } else {
@@ -45,41 +48,65 @@ public class ServerAuthorization extends Authorization {
     }
 
     @EventSubscriber
-    public void onInitialPublicKeyExchanged(ConnectionInitialPublicKeyExchangedEvent event) {
-        ChannelContext context = event.getContext();
+    public void onInitialPublicKeyExchanged(final ConnectionInitialPublicKeyExchangedEvent event) {
+        var context = event.getContext();
 
-        this.getObserverManager().observe(SessionPublicPacket.class, Direction.INBOUND, context).thenAccept(message -> {
-            SessionPublicPacket response = (SessionPublicPacket) message;
-            Security.setPartnerPublicKey(context.getUuid(), response.getPublicKey());
+        this.getObserverManager().observe(SessionPublicPacket.class, Direction.INBOUND, context).thenAccept(msg0 -> {
+            var receivedMessage = (SessionPublicPacket) msg0;
+
+            boolean isPartnerPublicKeyBuilt = Security.setPartnerPublicKey(context.getUuid(), receivedMessage.getPublicKey());
+
+            if (!isPartnerPublicKeyBuilt) {
+                context.restrict("Partner key could not be built");
+                return;
+            }
 
             this.getBus().call(new ConnectionSigningKeysExchangedEvent(context));
 
-            Optional<byte[]> baseSigningKey = Security.getBaseSigningKey(context.getUuid());
+            var baseSigningKey = Security.getBaseSigningKey(context.getUuid());
+
             if (baseSigningKey.isEmpty()) {
                 context.restrict("Unable to get public key for signing.");
 
                 return;
             }
 
-            SessionPublicPacket publicHashPacket = new SessionPublicPacket(baseSigningKey.get());
-            context.getChannel().writeAndFlush(publicHashPacket);
+            var responseKey = new SessionPublicPacket(baseSigningKey.get());
+            context.getChannel().writeAndFlush(responseKey);
         });
     }
 
     @EventSubscriber
-    public void onSigningKeysExchanged(ConnectionSigningKeysExchangedEvent event) {
-        ChannelContext context = event.getContext();
+    public void onSigningKeysExchanged(final ConnectionSigningKeysExchangedEvent event) {
+        var context = event.getContext();
 
-        this.getObserverManager().observe(SessionPublicPacket.class, Direction.INBOUND, context).thenAccept(msg2 -> {
-            SessionPublicPacket packet2 = (SessionPublicPacket) msg2;
+        this.getObserverManager().observe(SessionPublicPacket.class, Direction.INBOUND, context).thenAccept(msg0 -> {
+            var receivedMessage = (SessionPublicPacket) msg0;
 
-            Security.setSigningPublicKey(context.getUuid(), packet2.getPublicKey());
-            Security.deriveSigningKeyPair(context.getUuid(), Security.SideType.SERVER);
-            Security.finalizeSigningKeyPair(context.getUuid(), Security.SideType.SERVER);
+            boolean isSigningPublicKeySet = Security.setSigningPublicKey(context.getUuid(), receivedMessage.getPublicKey());
+
+            if (!isSigningPublicKeySet) {
+                context.restrict("Unable to set public key for signing.");
+                return;
+            }
+
+            boolean isSigningKeyPairDerived = Security.deriveSigningKeyPair(context.getUuid(), Security.SideType.SERVER);
+
+            if (!isSigningKeyPairDerived) {
+                context.restrict("Unable to derive signing key.");
+                return;
+            }
+
+            boolean isSigningKeyPairFinalized = Security.finalizeSigningKeyPair(context.getUuid(), Security.SideType.SERVER);
+
+            if (!isSigningKeyPairFinalized) {
+                context.restrict("Unable to finalize signing key.");
+                return;
+            }
 
             context.setHash(true);
 
-            Optional<byte[]> nonce = Security.getNonce(context.getUuid(), Security.EncryptionMode.ASYMMETRIC);
+            var nonce = Security.getNonce(context.getUuid(), Security.EncryptionMode.ASYMMETRIC);
 
             if (nonce.isEmpty()) {
                 context.restrict("Unable to get nonce in asymmetric mode.");
@@ -87,23 +114,29 @@ public class ServerAuthorization extends Authorization {
                 return;
             }
 
-            SessionNoncePacket noncePacket = new SessionNoncePacket(Security.EncryptionMode.ASYMMETRIC.getValue(), nonce.get());
-            context.getChannel().writeAndFlush(noncePacket);
+            var responseNonce = new SessionNoncePacket(Security.EncryptionMode.ASYMMETRIC.getValue(), nonce.get());
+            context.getChannel().writeAndFlush(responseNonce);
 
             this.getBus().call(new ConnectionIntegrityVerifiedEvent(context));
         });
     }
 
     @EventSubscriber
-    public void onConnectionIntegrityVerified(ConnectionIntegrityVerifiedEvent event) {
-        ChannelContext context = event.getContext();
+    public void onConnectionIntegrityVerified(final ConnectionIntegrityVerifiedEvent event) {
+        var context = event.getContext();
 
-        this.getObserverManager().observe(SessionStatePacket.class, Direction.INBOUND, context).thenAccept(msg3 -> {
-            SessionStatePacket packet3 = (SessionStatePacket) msg3;
+        this.getObserverManager().observe(SessionStatePacket.class, Direction.INBOUND, context).thenAccept(msg0 -> {
+            var receivedMessage = (SessionStatePacket) msg0;
 
-            if (SessionStatePacket.State.from(packet3.getState()) == SessionStatePacket.State.REGISTER_EXCHANGE) {
-                Security.generateKeys(context.getUuid(), Security.EncryptionMode.SYMMETRIC);
-                Optional<byte[]> keyExchange = Security.createKeyExchange(context.getUuid());
+            if (SessionStatePacket.State.from(receivedMessage.getState()) == SessionStatePacket.State.REGISTER_EXCHANGE) {
+                boolean isKeyBuilt = Security.generateKeys(context.getUuid(), Security.EncryptionMode.SYMMETRIC);
+
+                if (!isKeyBuilt) {
+                    context.restrict("Unable to generate keys for signing.");
+                    return;
+                }
+
+                var keyExchange = Security.createKeyExchange(context.getUuid());
 
                 if (keyExchange.isEmpty()) {
                     context.restrict("Unable to create exchange message.");
@@ -112,25 +145,29 @@ public class ServerAuthorization extends Authorization {
 
                 this.getBus().call(new ConnectionHandshakeComplete(context));
 
-                SessionPrivatePacket privatePacket = new SessionPrivatePacket(keyExchange.get());
-                context.getChannel().writeAndFlush(privatePacket);
-                context.setEncryptionType(Security.EncryptionMode.SYMMETRIC);
+                SessionPrivatePacket responseKey = new SessionPrivatePacket(keyExchange.get());
 
+                context.getChannel().writeAndFlush(responseKey);
+                context.setEncryptionType(Security.EncryptionMode.SYMMETRIC);
+            } else {
+                context.restrict("Invalid session state.");
             }
         });
     }
 
     @EventSubscriber
-    public void onHandshakeComplete(ConnectionHandshakeComplete event) {
-        ChannelContext context = event.getContext();
+    public void onHandshakeComplete(final ConnectionHandshakeComplete event) {
+        var context = event.getContext();
 
-        this.getObserverManager().observe(SessionStatePacket.class, Direction.INBOUND, context).thenAccept(msg4 -> {
-            SessionStatePacket packet4 = (SessionStatePacket) msg4;
+        this.getObserverManager().observe(SessionStatePacket.class, Direction.INBOUND, context).thenAccept(msg0 -> {
+            var receivedMessage = (SessionStatePacket) msg0;
 
-            if (SessionStatePacket.State.from(packet4.getState()) == SessionStatePacket.State.REGISTER_FINISH) {
+            if (SessionStatePacket.State.from(receivedMessage.getState()) == SessionStatePacket.State.REGISTER_FINISH) {
                 context.setReady(true);
 
                 this.getBus().call(new ConnectionReadyEvent(context));
+            } else {
+                context.restrict("Invalid session state.");
             }
         });
     }
