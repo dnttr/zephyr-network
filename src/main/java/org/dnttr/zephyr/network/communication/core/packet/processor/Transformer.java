@@ -8,8 +8,11 @@ import org.dnttr.zephyr.network.communication.core.packet.processor.impl.SecureP
 import org.dnttr.zephyr.network.communication.core.packet.processor.impl.StandardProcessor;
 import org.dnttr.zephyr.network.protocol.Packet;
 import org.dnttr.zephyr.serializer.Serializer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.IdentityHashMap;
+import java.util.Objects;
 
 /**
  * @author dnttr
@@ -34,13 +37,20 @@ public class Transformer {
         this.integrity = new Integrity();
     }
 
-    public Object transform(Direction direction, Object message, ChannelContext context) throws Exception {
+    public @Nullable Object transform(@NotNull Direction direction, @NotNull Object message, @NotNull ChannelContext context) throws Exception {
+        Objects.requireNonNull(direction);
+        Objects.requireNonNull(message);
+        Objects.requireNonNull(context);
+
         IProcessor processor;
 
         switch (context.getEncryptionType()) {
-            case NONE -> processor = this.standardProcessor;
-            case ASYMMETRIC, SYMMETRIC -> processor = this.secureProcessor;
-            default -> throw new IllegalArgumentException("Unrecognized cipher type: " + context.getEncryptionType());
+            case NONE ->
+                    processor = this.standardProcessor;
+            case ASYMMETRIC, SYMMETRIC ->
+                    processor = this.secureProcessor;
+            default ->
+                    throw new IllegalArgumentException("Unrecognized cipher type: " + context.getEncryptionType());
         }
 
         switch (direction) {
@@ -50,7 +60,9 @@ public class Transformer {
                     byte[] result = carrier.content();
 
                     if (carrier.hashSize() != 0 && context.isHash()) {
-                        if (!this.integrity.verify(context, carrier)) {
+                        boolean isVerified = this.integrity.verify(context, carrier);
+
+                        if (!isVerified) {
                             return null;
                         }
                     }
@@ -100,6 +112,7 @@ public class Transformer {
                     throw new IllegalArgumentException("Outbound processing requires a Packet type, but received: " + message.getClass().getSimpleName());
                 }
             }
+
             default -> throw new IllegalArgumentException("Unknown target type: " + direction);
         }
     }
