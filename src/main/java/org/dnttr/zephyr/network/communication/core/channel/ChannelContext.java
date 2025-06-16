@@ -58,8 +58,13 @@ public final class ChannelContext {
     @Override
     public String toString() {
         return "ChannelContext{" +
+                "channel=" + channel +
+                ", consumer=" + consumer +
+                ", uuid=" + uuid +
+                ", encryptionType=" + encryptionType +
                 ", restricted=" + restricted +
                 ", ready=" + ready +
+                ", hash=" + hash +
                 '}';
     }
 }
