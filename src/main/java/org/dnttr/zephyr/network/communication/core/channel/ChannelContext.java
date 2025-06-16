@@ -1,5 +1,7 @@
 package org.dnttr.zephyr.network.communication.core.channel;
 
+import com.github.benmanes.caffeine.cache.AsyncCache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import io.netty.channel.Channel;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -8,6 +10,9 @@ import org.dnttr.zephyr.network.bridge.Security;
 import org.dnttr.zephyr.network.communication.core.Consumer;
 import org.dnttr.zephyr.network.protocol.Packet;
 
+import java.nio.ByteBuffer;
+import java.time.Duration;
+
 /**
  * @author dnttr
  */
@@ -15,6 +20,11 @@ import org.dnttr.zephyr.network.protocol.Packet;
 @Getter
 @Setter
 public final class ChannelContext {
+
+    private final AsyncCache<ByteBuffer, Boolean> nonces = Caffeine
+            .newBuilder()
+            .expireAfterWrite(Duration.ofSeconds(25))
+            .buildAsync();
 
     private final Channel channel;
     private final Consumer consumer;

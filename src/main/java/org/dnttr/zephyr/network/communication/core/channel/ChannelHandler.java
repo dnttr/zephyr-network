@@ -1,7 +1,5 @@
 package org.dnttr.zephyr.network.communication.core.channel;
 
-import com.github.benmanes.caffeine.cache.AsyncCache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.RequiredArgsConstructor;
 import org.dnttr.zephyr.event.EventBus;
 import org.dnttr.zephyr.network.bridge.Security;
@@ -15,7 +13,6 @@ import org.dnttr.zephyr.network.protocol.packets.authorization.SessionNoncePacke
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
-import java.time.Duration;
 import java.util.Optional;
 
 /**
@@ -24,11 +21,6 @@ import java.util.Optional;
 
 @RequiredArgsConstructor
 public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
-
-    private final AsyncCache<ByteBuffer, Boolean> nonces = Caffeine
-            .newBuilder()
-            .expireAfterWrite(Duration.ofSeconds(25))
-            .buildAsync();
 
     private final ChannelController controller;
     private final EventBus eventBus;
@@ -46,12 +38,12 @@ public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
             if (packet instanceof SessionNoncePacket noncePacket) {
                 byte[] nonce = noncePacket.getNonce();
 
-                if (this.isNoncePresent(nonce)) {
+                if (this.isNoncePresent(context, nonce)) {
                     context.restrict("Such nonce is already in use.");
                     return;
                 }
 
-                this.recordNonce(nonce);
+                this.recordNonce(context, nonce);
 
                 Security.setNonce(context.getUuid(), Security.EncryptionMode.SYMMETRIC, nonce);
             }
@@ -92,7 +84,7 @@ public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
                 if (nonceOpt.isPresent()) {
                     byte[] nonce = nonceOpt.get();
 
-                    if (this.isNoncePresent(nonce)) {
+                    if (this.isNoncePresent(context, nonce)) {
                         context.restrict("Such nonce is already in use.");
                         return null;
                     }
@@ -120,15 +112,15 @@ public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
         this.controller.fireWriteComplete(context, input);
     }
 
-    private void recordNonce(byte[] nonce) {
+    private void recordNonce(ChannelContext context, byte[] nonce) {
         ByteBuffer key = ByteBuffer.wrap(nonce.clone());
 
-        this.nonces.synchronous().put(key, Boolean.TRUE);
+        context.getNonces().synchronous().put(key, Boolean.TRUE);
     }
 
-    private boolean isNoncePresent(byte[] nonce) {
+    private boolean isNoncePresent(ChannelContext context, byte[] nonce) {
         ByteBuffer key = ByteBuffer.wrap(nonce);
 
-        return nonces.synchronous().getIfPresent(key) != null;
+        return context.getNonces().synchronous().getIfPresent(key) != null;
     }
 }
