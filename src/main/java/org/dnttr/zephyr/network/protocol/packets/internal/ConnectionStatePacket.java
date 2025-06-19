@@ -1,4 +1,4 @@
-package org.dnttr.zephyr.network.protocol.packets;
+package org.dnttr.zephyr.network.protocol.packets.internal;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -17,12 +17,12 @@ import java.util.Arrays;
 @Getter
 @Serializable
 @Data(identity = -0x1, protocol = Constants.VER_1)
-public class SessionStatePacket extends Packet {
+public class ConnectionStatePacket extends Packet {
 
     @Address(address = "sessionState")
     private final int state;
 
-    public SessionStatePacket(@Address(address = "sessionState") int state) {
+    public ConnectionStatePacket(@Address(address = "sessionState") int state) {
         this.state = state;
     }
 
@@ -31,10 +31,10 @@ public class SessionStatePacket extends Packet {
     @RequiredArgsConstructor
     public enum State {
 
-        REGISTER_REQUEST(0x0),
-        REGISTER_EXCHANGE(0x1),
-        REGISTER_FINISH(0x2),
-        REGISTER_CONFIRMATION(0x3);
+        REGISTER_OPEN(0x0),
+        REGISTER_KEYS(0x1),
+        REGISTER_CLOSE(0x2),
+        REGISTER_CONFIRM(0x3);
 
         private final int value;
 

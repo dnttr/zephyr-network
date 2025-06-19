@@ -1,4 +1,4 @@
-package org.dnttr.zephyr.network.protocol.packets.authorization;
+package org.dnttr.zephyr.network.protocol.packets.internal.authorization;
 
 import lombok.Getter;
 import org.dnttr.zephyr.network.protocol.Constants;
@@ -14,12 +14,12 @@ import org.dnttr.zephyr.serializer.annotations.Serializable;
 @Getter
 @Serializable
 @Data(identity = -0x4, protocol = Constants.VER_1)
-public final class SessionPrivatePacket extends Packet {
+public final class ConnectionPrivatePacket extends Packet {
 
     @Address(address = "privateKey")
     private final byte[] key;
 
-    public SessionPrivatePacket(@Address(address = "privateKey") byte[] key) {
+    public ConnectionPrivatePacket(@Address(address = "privateKey") byte[] key) {
         this.key = key;
     }
 }

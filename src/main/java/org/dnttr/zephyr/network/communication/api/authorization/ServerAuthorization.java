@@ -8,10 +8,10 @@ import org.dnttr.zephyr.network.communication.core.flow.events.internal.channel.
 import org.dnttr.zephyr.network.communication.core.flow.events.session.SessionEstablishedEvent;
 import org.dnttr.zephyr.network.communication.core.managers.ObserverManager;
 import org.dnttr.zephyr.network.communication.core.packet.processor.Direction;
-import org.dnttr.zephyr.network.protocol.packets.SessionStatePacket;
-import org.dnttr.zephyr.network.protocol.packets.authorization.SessionNoncePacket;
-import org.dnttr.zephyr.network.protocol.packets.authorization.SessionPrivatePacket;
-import org.dnttr.zephyr.network.protocol.packets.authorization.SessionPublicPacket;
+import org.dnttr.zephyr.network.protocol.packets.internal.ConnectionStatePacket;
+import org.dnttr.zephyr.network.protocol.packets.internal.authorization.ConnectionNoncePacket;
+import org.dnttr.zephyr.network.protocol.packets.internal.authorization.ConnectionPrivatePacket;
+import org.dnttr.zephyr.network.protocol.packets.internal.authorization.ConnectionPublicPacket;
 
 /**
  * @author dnttr
@@ -27,10 +27,10 @@ public final class ServerAuthorization extends Authorization {
     public void onEstablished(final ConnectionEstablishedEvent event) {
         var context = event.getContext();
 
-        this.getObserverManager().observe(SessionStatePacket.class, Direction.INBOUND, context).thenAccept(msg0 -> {
-            var receivedMessage = (SessionStatePacket) msg0;
+        this.getObserverManager().observe(ConnectionStatePacket.class, Direction.INBOUND, context).thenAccept(msg0 -> {
+            var receivedMessage = (ConnectionStatePacket) msg0;
 
-            if (SessionStatePacket.State.from(receivedMessage.getState()) == SessionStatePacket.State.REGISTER_REQUEST) {
+            if (ConnectionStatePacket.State.from(receivedMessage.getState()) == ConnectionStatePacket.State.REGISTER_OPEN) {
                 boolean isNonceBuilt = Security.buildNonce(context.getUuid(), Security.EncryptionMode.ASYMMETRIC);
 
                 if (!isNonceBuilt) {
@@ -38,7 +38,7 @@ public final class ServerAuthorization extends Authorization {
                     return;
                 }
 
-                var responseKey = new SessionPublicPacket(this.getPublicKeyForAuth(context));
+                var responseKey = new ConnectionPublicPacket(this.getPublicKeyForAuth(context));
                 context.getChannel().writeAndFlush(responseKey);
 
                 this.getBus().call(new ConnectionInitialPublicKeyExchangedEvent(context));
@@ -52,8 +52,8 @@ public final class ServerAuthorization extends Authorization {
     public void onInitialPublicKeyExchanged(final ConnectionInitialPublicKeyExchangedEvent event) {
         var context = event.getContext();
 
-        this.getObserverManager().observe(SessionPublicPacket.class, Direction.INBOUND, context).thenAccept(msg0 -> {
-            var receivedMessage = (SessionPublicPacket) msg0;
+        this.getObserverManager().observe(ConnectionPublicPacket.class, Direction.INBOUND, context).thenAccept(msg0 -> {
+            var receivedMessage = (ConnectionPublicPacket) msg0;
 
             boolean isPartnerPublicKeyBuilt = Security.setPartnerPublicKey(context.getUuid(), receivedMessage.getPublicKey());
 
@@ -72,7 +72,7 @@ public final class ServerAuthorization extends Authorization {
                 return;
             }
 
-            var responseKey = new SessionPublicPacket(baseSigningKey.get());
+            var responseKey = new ConnectionPublicPacket(baseSigningKey.get());
             context.getChannel().writeAndFlush(responseKey);
         });
     }
@@ -81,8 +81,8 @@ public final class ServerAuthorization extends Authorization {
     public void onSigningKeysExchanged(final ConnectionSigningKeysExchangedEvent event) {
         var context = event.getContext();
 
-        this.getObserverManager().observe(SessionPublicPacket.class, Direction.INBOUND, context).thenAccept(msg0 -> {
-            var receivedMessage = (SessionPublicPacket) msg0;
+        this.getObserverManager().observe(ConnectionPublicPacket.class, Direction.INBOUND, context).thenAccept(msg0 -> {
+            var receivedMessage = (ConnectionPublicPacket) msg0;
 
             boolean isSigningPublicKeySet = Security.setSigningPublicKey(context.getUuid(), receivedMessage.getPublicKey());
 
@@ -115,7 +115,7 @@ public final class ServerAuthorization extends Authorization {
                 return;
             }
 
-            var responseNonce = new SessionNoncePacket(Security.EncryptionMode.ASYMMETRIC.getValue(), nonce.get());
+            var responseNonce = new ConnectionNoncePacket(Security.EncryptionMode.ASYMMETRIC.getValue(), nonce.get());
             context.getChannel().writeAndFlush(responseNonce);
 
             this.getBus().call(new ConnectionIntegrityVerifiedEvent(context));
@@ -126,10 +126,10 @@ public final class ServerAuthorization extends Authorization {
     public void onConnectionIntegrityVerified(final ConnectionIntegrityVerifiedEvent event) {
         var context = event.getContext();
 
-        this.getObserverManager().observe(SessionStatePacket.class, Direction.INBOUND, context).thenAccept(msg0 -> {
-            var receivedMessage = (SessionStatePacket) msg0;
+        this.getObserverManager().observe(ConnectionStatePacket.class, Direction.INBOUND, context).thenAccept(msg0 -> {
+            var receivedMessage = (ConnectionStatePacket) msg0;
 
-            if (SessionStatePacket.State.from(receivedMessage.getState()) == SessionStatePacket.State.REGISTER_EXCHANGE) {
+            if (ConnectionStatePacket.State.from(receivedMessage.getState()) == ConnectionStatePacket.State.REGISTER_KEYS) {
                 boolean isKeyBuilt = Security.generateKeys(context.getUuid(), Security.EncryptionMode.SYMMETRIC);
 
                 if (!isKeyBuilt) {
@@ -146,7 +146,7 @@ public final class ServerAuthorization extends Authorization {
 
                 this.getBus().call(new ConnectionHandshakeComplete(context));
 
-                SessionPrivatePacket responseKey = new SessionPrivatePacket(keyExchange.get());
+                ConnectionPrivatePacket responseKey = new ConnectionPrivatePacket(keyExchange.get());
 
                 context.getChannel().writeAndFlush(responseKey);
             } else {
@@ -159,13 +159,13 @@ public final class ServerAuthorization extends Authorization {
     public void onHandshakeComplete(final ConnectionHandshakeComplete event) {
         var context = event.getContext();
 
-        this.getObserverManager().observe(SessionStatePacket.class, Direction.INBOUND, context).thenAccept(msg0 -> {
-            var receivedStateMessage = (SessionStatePacket) msg0;
+        this.getObserverManager().observe(ConnectionStatePacket.class, Direction.INBOUND, context).thenAccept(msg0 -> {
+            var receivedStateMessage = (ConnectionStatePacket) msg0;
 
-            if (SessionStatePacket.State.from(receivedStateMessage.getState()) == SessionStatePacket.State.REGISTER_FINISH) {
+            if (ConnectionStatePacket.State.from(receivedStateMessage.getState()) == ConnectionStatePacket.State.REGISTER_CLOSE) {
                 context.setEncryptionType(Security.EncryptionMode.SYMMETRIC);
 
-                var responseConfirmationMessage = new SessionStatePacket(SessionStatePacket.State.REGISTER_CONFIRMATION.getValue());
+                var responseConfirmationMessage = new ConnectionStatePacket(ConnectionStatePacket.State.REGISTER_CONFIRM.getValue());
 
                 context.getChannel().writeAndFlush(responseConfirmationMessage).addListener(future -> {
                     if (future.isSuccess()) {

@@ -8,7 +8,7 @@ import org.dnttr.zephyr.network.communication.core.channel.ChannelController;
 import org.dnttr.zephyr.network.communication.core.flow.events.internal.channel.ConnectionEstablishedEvent;
 import org.dnttr.zephyr.network.communication.core.managers.ObserverManager;
 import org.dnttr.zephyr.network.communication.core.packet.processor.Transformer;
-import org.dnttr.zephyr.network.protocol.packets.SessionStatePacket;
+import org.dnttr.zephyr.network.protocol.packets.internal.ConnectionStatePacket;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,7 +31,7 @@ public final class ClientChannelController extends ChannelController {
     public void fireActive(@NotNull ChannelContext context) {
         this.getEventBus().call(new ConnectionEstablishedEvent(context));
 
-        SessionStatePacket packet = new SessionStatePacket(SessionStatePacket.State.REGISTER_REQUEST.getValue());
+        ConnectionStatePacket packet = new ConnectionStatePacket(ConnectionStatePacket.State.REGISTER_OPEN.getValue());
         context.getChannel().writeAndFlush(packet);
 
         super.fireActive(context);

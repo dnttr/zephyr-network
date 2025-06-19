@@ -9,7 +9,7 @@ import org.dnttr.zephyr.network.communication.core.packet.Carrier;
 import org.dnttr.zephyr.network.communication.core.packet.processor.Direction;
 import org.dnttr.zephyr.network.communication.core.utilities.PacketUtils;
 import org.dnttr.zephyr.network.protocol.Packet;
-import org.dnttr.zephyr.network.protocol.packets.authorization.SessionNoncePacket;
+import org.dnttr.zephyr.network.protocol.packets.internal.authorization.ConnectionNoncePacket;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
@@ -34,7 +34,7 @@ public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
         }
 
         if (context.getEncryptionType() == Security.EncryptionMode.SYMMETRIC) {
-            if (packet instanceof SessionNoncePacket noncePacket) {
+            if (packet instanceof ConnectionNoncePacket noncePacket) {
                 byte[] nonce = noncePacket.getNonce();
 
                 if (this.isNoncePresent(context, nonce)) {
@@ -74,7 +74,7 @@ public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
     @Override
     protected @Nullable Carrier write(ChannelContext context, Packet input) throws Exception {
         if (context.getEncryptionType() == Security.EncryptionMode.SYMMETRIC) {
-            boolean isNonce = input instanceof SessionNoncePacket;
+            boolean isNonce = input instanceof ConnectionNoncePacket;
 
             if (!isNonce) {
                 Security.buildNonce(context.getUuid(), Security.EncryptionMode.SYMMETRIC);
@@ -88,7 +88,7 @@ public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
                         return null;
                     }
 
-                    SessionNoncePacket noncePacket = new SessionNoncePacket(Security.EncryptionMode.SYMMETRIC.getValue(), nonce);
+                    ConnectionNoncePacket noncePacket = new ConnectionNoncePacket(Security.EncryptionMode.SYMMETRIC.getValue(), nonce);
                     context.getChannel().writeAndFlush(noncePacket);
                 } else {
                     context.restrict("Unable to get nonce.");

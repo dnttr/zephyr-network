@@ -1,4 +1,4 @@
-package org.dnttr.zephyr.network.protocol.packets.authorization;
+package org.dnttr.zephyr.network.protocol.packets.internal.authorization;
 
 import lombok.Getter;
 import org.dnttr.zephyr.network.protocol.Data;
@@ -15,7 +15,7 @@ import static org.dnttr.zephyr.network.protocol.Constants.VER_1;
 @Getter
 @Serializable
 @Data(identity = -0x3, protocol = VER_1)
-public final class SessionNoncePacket extends Packet {
+public final class ConnectionNoncePacket extends Packet {
 
     @Address(address = "nonceMode")
     private final int mode;
@@ -23,7 +23,7 @@ public final class SessionNoncePacket extends Packet {
     @Address(address = "nonce")
     private final byte[] nonce;
 
-    public SessionNoncePacket(@Address(address = "nonceMode") int mode,  @Address(address = "nonce") byte[] nonce) {
+    public ConnectionNoncePacket(@Address(address = "nonceMode") int mode, @Address(address = "nonce") byte[] nonce) {
         this.mode = mode;
         this.nonce = nonce;
     }

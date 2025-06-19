@@ -8,11 +8,11 @@ import org.dnttr.zephyr.network.communication.core.packet.processor.impl.SecureP
 import org.dnttr.zephyr.network.communication.core.packet.processor.impl.StandardProcessor;
 import org.dnttr.zephyr.network.protocol.Data;
 import org.dnttr.zephyr.network.protocol.Packet;
-import org.dnttr.zephyr.network.protocol.packets.SessionStatePacket;
-import org.dnttr.zephyr.network.protocol.packets.authorization.SessionNoncePacket;
-import org.dnttr.zephyr.network.protocol.packets.authorization.SessionPrivatePacket;
-import org.dnttr.zephyr.network.protocol.packets.authorization.SessionPublicPacket;
 import org.dnttr.zephyr.network.protocol.packets.client.ClientAvailabilityPacket;
+import org.dnttr.zephyr.network.protocol.packets.internal.ConnectionStatePacket;
+import org.dnttr.zephyr.network.protocol.packets.internal.authorization.ConnectionNoncePacket;
+import org.dnttr.zephyr.network.protocol.packets.internal.authorization.ConnectionPrivatePacket;
+import org.dnttr.zephyr.network.protocol.packets.internal.authorization.ConnectionPublicPacket;
 import org.dnttr.zephyr.serializer.Serializer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,10 +40,10 @@ public class Transformer {
         this.packets = new HashMap<>();
 
         List<Class<? extends Packet>> packetClasses = List.of(
-                SessionStatePacket.class,
-                SessionPrivatePacket.class,
-                SessionPublicPacket.class,
-                SessionNoncePacket.class,
+                ConnectionStatePacket.class,
+                ConnectionPrivatePacket.class,
+                ConnectionPublicPacket.class,
+                ConnectionNoncePacket.class,
                 ClientAvailabilityPacket.class
         );
 
@@ -64,49 +64,18 @@ public class Transformer {
         Objects.requireNonNull(message);
         Objects.requireNonNull(context);
 
-        var type = context.getEncryptionType();
-        IProcessor processor;
-
-        switch (type) {
-            case NONE ->
-                    processor = this.standardProcessor;
-            case ASYMMETRIC, SYMMETRIC ->
-                    processor = this.secureProcessor;
-            default ->
-                    throw new IllegalArgumentException("Unrecognized cipher type: " + type);
-        }
-
         switch (direction) {
             case INBOUND -> {
                 if (message instanceof Carrier carrier) {
-                    int packetId = carrier.identity();
-                    byte[] result = carrier.content();
+                    var klass = this.packets.get(carrier.identity());
 
-                    long timestamp = carrier.timestamp();
-
-                    if (carrier.hashSize() != 0 && context.isHash()) {
-                        boolean isVerified = this.integrity.verify(context, timestamp, carrier);
-
-                        if (!isVerified) {
-                            return null;
-                        }
-                    }
-
-                    if (Math.abs(System.currentTimeMillis() - timestamp) > Duration.ofSeconds(6).toMillis()) {
+                    if (!this.isTimestampValid(carrier)) {
                         return null;
                     }
 
-                    if (packetId != -0x3) {
-                        result = processor.processInbound(context, carrier.content());
+                    byte[] result = process(context, Direction.INBOUND, carrier);
 
-                        if (result == null) {
-                            return null;
-                        }
-                    }
-
-                    var klass = this.packets.get(carrier.identity());
-
-                    if (result == null || klass == null) {
+                    if (result == null) {
                         return null;
                     }
 
@@ -118,22 +87,16 @@ public class Transformer {
 
             case OUTBOUND -> {
                 if (message instanceof Packet packet) {
-                    byte[] serializedPacket = Serializer.serializeToArray(packet.getClass(), packet);
-                    byte[] processedPacket;
+                    byte[] processedPacket = this.process(context, Direction.OUTBOUND, packet);
+
+                    if  (processedPacket == null) {
+                        return null;
+                    }
 
                     int versionId = packet.getData().protocol();
                     int packetId = packet.getData().identity();
                     long timestamp = System.currentTimeMillis();
 
-                    if (packetId != -0x3) {
-                        processedPacket = processor.processOutbound(context, serializedPacket);
-                    } else {
-                        processedPacket = serializedPacket;
-                    }
-
-                    if (processedPacket == null) {
-                        return null;
-                    }
 
                     byte[] computedHash = this.integrity.build(context, timestamp, processedPacket);
 
@@ -149,5 +112,58 @@ public class Transformer {
 
             default -> throw new IllegalArgumentException("Unknown target type: " + direction);
         }
+    }
+
+    private boolean isTimestampValid(@NotNull Carrier carrier) {
+        return Math.abs(System.currentTimeMillis() - carrier.timestamp()) <= Duration.ofSeconds(6).toMillis();
+    }
+
+    private byte @Nullable [] process(ChannelContext context, Direction direction, Object object) throws Exception {
+        IProcessor processor;
+
+        switch (context.getEncryptionType()) {
+            case NONE ->
+                    processor = this.standardProcessor;
+            case ASYMMETRIC, SYMMETRIC ->
+                    processor = this.secureProcessor;
+            default ->
+                    throw new IllegalArgumentException("Unrecognized cipher type");
+        }
+
+        byte[] result = null;
+
+        switch (direction) {
+            case INBOUND -> {
+                Carrier carrier = (Carrier) object;
+
+                result = carrier.content();
+
+                if (carrier.hashSize() != 0 && context.isHash()) {
+                    boolean isVerified = this.integrity.verify(context, carrier.timestamp(), carrier);
+
+                    if (!isVerified) {
+                        return null;
+                    }
+                }
+
+                if (carrier.identity() != -0x3) {
+                    result = processor.processInbound(context, carrier.content());
+                }
+            }
+
+            case OUTBOUND -> {
+                Packet packet = (Packet) object;
+
+                byte[] serializedPacket = Serializer.serializeToArray(packet.getClass(), packet);
+
+                if (packet.getData().identity() != -0x3) {
+                    result = processor.processOutbound(context, serializedPacket);
+                } else {
+                    result = serializedPacket;
+                }
+            }
+        }
+
+        return result;
     }
 }
