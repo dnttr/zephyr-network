@@ -36,6 +36,9 @@ public class Transformer {
 
     private final Integrity integrity;
 
+    private static final int CACHE_EXPIRATION_TIME = 6;
+    private static final int PACKET_RULES_IGNORE = -0x3;
+
     public Transformer() {
         this.packets = new HashMap<>();
 
@@ -114,7 +117,7 @@ public class Transformer {
     }
 
     private boolean isTimestampValid(@NotNull Carrier carrier) {
-        return Math.abs(System.currentTimeMillis() - carrier.timestamp()) <= Duration.ofSeconds(6).toMillis();
+        return Math.abs(System.currentTimeMillis() - carrier.timestamp()) <= Duration.ofSeconds(CACHE_EXPIRATION_TIME).toMillis();
     }
 
     private byte @Nullable [] process(ChannelContext context, Direction direction, Object object) throws Exception {
@@ -145,7 +148,7 @@ public class Transformer {
                     }
                 }
 
-                if (carrier.identity() != -0x3) {
+                if (carrier.identity() != -PACKET_RULES_IGNORE) {
                     buffer = processor.processInbound(context, carrier.content());
                 }
             }
@@ -155,7 +158,7 @@ public class Transformer {
 
                 byte[] data = Serializer.serializeToArray(packet.getClass(), packet);
 
-                if (packet.getData().identity() != -0x3) {
+                if (packet.getData().identity() != -PACKET_RULES_IGNORE) {
                     buffer = processor.processOutbound(context, data);
                 } else {
                     buffer = data;
