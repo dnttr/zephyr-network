@@ -11,10 +11,10 @@ import org.dnttr.zephyr.network.communication.core.managers.ObserverManager;
 import java.net.InetSocketAddress;
 
 @RequiredArgsConstructor
-public abstract class Worker {
+public abstract class Worker<B> {
 
     @Getter
-    protected static Worker instance;
+    protected static Worker<?> instance;
 
     @Getter
     protected final EventBus eventBus;
@@ -29,11 +29,14 @@ public abstract class Worker {
 
     private final Parent session;
 
-    public Worker(EventBus eventBus, InetSocketAddress address, ObserverManager observerManager, Parent session) {
+    private B bootstrap;
+
+    public Worker(InetSocketAddress address, EventBus eventBus, B bootstrap, ObserverManager observerManager, Parent session) {
         instance = this;
 
-        this.eventBus = eventBus;
         this.address = address;
+        this.eventBus = eventBus;
+        this.bootstrap = bootstrap;
 
         this.observerManager = observerManager;
         this.boss = new MultiThreadIoEventLoopGroup(1, NioIoHandler.newFactory());
@@ -45,10 +48,13 @@ public abstract class Worker {
     final void construct0() {
         this.eventBus.register(this.observerManager);
         this.eventBus.register(this.session);
-        this.construct();
+
+        this.construct(this.bootstrap);
     }
 
-    protected abstract void construct();
+    protected abstract void construct(B bootstrap);
+
+    protected abstract void execute(B bootstrap);
 
     protected abstract void destroy();
 }

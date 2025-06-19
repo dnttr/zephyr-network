@@ -17,24 +17,22 @@ import org.jetbrains.annotations.NotNull;
 
 import java.net.InetSocketAddress;
 
-public final class Server extends Worker {
+public final class Server extends Worker<ServerBootstrap> {
 
     private final MultiThreadIoEventLoopGroup child;
 
     public Server(@NotNull InetSocketAddress socketAddress) {
-        super(new EventBus(), socketAddress, new ObserverManager(), new ServerSessionEndpoint());
+        super(socketAddress, new EventBus(), new ServerBootstrap(), new ObserverManager(), new ServerSessionEndpoint());
 
         this.child = new MultiThreadIoEventLoopGroup(0, NioIoHandler.newFactory());
         this.environment.execute();
     }
 
     @Override
-    protected void construct() {
-        final ServerBootstrap bootstrap = new ServerBootstrap();
+    protected void construct(ServerBootstrap bootstrap) {
         final TransformerFacade facade = new TransformerFacade();
-        final ServerChannelController controller = new ServerChannelController(this.eventBus, this.observerManager, facade);
 
-        ChannelHandler handler = new ChannelHandler(controller, this.eventBus);
+        final ServerChannelController controller = new ServerChannelController(this.eventBus, this.observerManager, facade);
 
         bootstrap.
                 group(this.boss, child).
@@ -42,15 +40,17 @@ public final class Server extends Worker {
                 childOption(ChannelOption.SO_KEEPALIVE, true).
                 childOption(ChannelOption.TCP_NODELAY, true).
                 channel(NioServerSocketChannel.class).
-                childHandler(handler);
+                childHandler(new ChannelHandler(controller, this.eventBus));
+    }
 
+    @Override
+    protected void execute(ServerBootstrap bootstrap) {
         try {
-            ChannelFuture future = bootstrap.bind(getAddress()).sync();
-            future.addListener(f -> {
+            ChannelFuture future = bootstrap.bind(getAddress()).addListener(f -> {
                 if (f.isSuccess()) {
-                    System.out.println("Server has been successfully started.");
+                    System.out.println("Server bound to " + getAddress());
                 }
-            });
+            }).sync();
 
             future.channel().closeFuture().sync();
         } catch (Exception _) {

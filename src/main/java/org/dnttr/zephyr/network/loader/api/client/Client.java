@@ -14,18 +14,18 @@ import org.dnttr.zephyr.network.loader.core.Worker;
 
 import java.net.InetSocketAddress;
 
-public class Client extends Worker {
+public class Client extends Worker<Bootstrap> {
 
     public Client(InetSocketAddress socketAddress) {
-        super(new EventBus(), socketAddress, new ObserverManager(), new ClientSessionEndpoint());
+        super(socketAddress, new EventBus(), new Bootstrap(), new ObserverManager(), new ClientSessionEndpoint());
 
         this.environment.execute();
     }
 
     @Override
-    protected void construct() {
-        final Bootstrap bootstrap = new Bootstrap();
+    protected void construct(Bootstrap bootstrap) {
         final TransformerFacade facade = new TransformerFacade();
+
         final ClientChannelController controller = new ClientChannelController(this.eventBus, this.observerManager, facade);
 
         bootstrap.
@@ -33,14 +33,16 @@ public class Client extends Worker {
                 channel(NioSocketChannel.class).
                 option(ChannelOption.SO_KEEPALIVE, true).
                 handler(new ChannelHandler(controller, this.eventBus));
+    }
 
-        try {
-            ChannelFuture future = bootstrap.connect(getAddress()).sync();
-            future.addListener(f -> {
+    @Override
+    protected void execute(Bootstrap bootstrap) {
+        try{
+            ChannelFuture future = bootstrap.connect(getAddress()).addListener(f -> {
                 if (f.isSuccess()) {
                     System.out.println("Client connected to " + getAddress());
                 }
-            });
+            }).sync();
 
             future.channel().closeFuture().sync();
         } catch (Exception _) {
