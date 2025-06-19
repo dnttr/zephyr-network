@@ -18,12 +18,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
+ * Handles the transformation of messages between network-ready {@link Carrier} objects
+ * and application-level {@link Packet} objects. It manages serialization, deserialization,
+ * encryption, and decryption based on the current channel context.
+ *
  * @author dnttr
+ * @since 1.0.0
  */
 
 public class Transformer {
@@ -36,9 +39,21 @@ public class Transformer {
 
     private final Integrity integrity;
 
+    /**
+     * Defines the time window in seconds for which a packet timestamp is considered valid.
+     * This is used to mitigate simple replay attacks by rejecting packets that are too old.
+     */
     private static final int CACHE_EXPIRATION_TIME = 6;
-    private static final int PACKET_RULES_IGNORE = -0x3;
 
+    /**
+     * A set of packet identifiers that should be exempt from the standard encryption/decryption process.
+     * This is necessary for handshake packets like nonce exchanges that must be sent in plaintext.
+     */
+    private static final Set<Integer> ENCRYPTION_EXEMPT_IDS = Set.of(-0x3);
+
+    /**
+     * Constructs a new Transformer, initializing packet mappings, processors, and integrity handlers.
+     */
     public Transformer() {
         this.packets = new HashMap<>();
 
@@ -46,7 +61,7 @@ public class Transformer {
                 ConnectionStatePacket.class,
                 ConnectionPrivatePacket.class,
                 ConnectionPublicPacket.class,
-                ConnectionNoncePacket.class, //-0x3
+                ConnectionNoncePacket.class,
                 ClientAvailabilityPacket.class
         );
 
@@ -62,6 +77,15 @@ public class Transformer {
         this.integrity = new Integrity();
     }
 
+    /**
+     * Main transformation method that processes inbound and outbound messages.
+     *
+     * @param direction The direction of the message flow (INBOUND or OUTBOUND).
+     * @param message   The message to transform, either a {@link Carrier} for inbound or a {@link Packet} for outbound.
+     * @param context   The channel context, containing session state like encryption settings.
+     * @return A transformed object, e.g., a {@link Packet} for inbound or a {@link Carrier} for outbound, or {@code null} on failure.
+     * @throws Exception if an error occurs during processing.
+     */
     public @Nullable Object transform(@NotNull Direction direction, @NotNull Object message, @NotNull ChannelContext context) throws Exception {
         Objects.requireNonNull(direction);
         Objects.requireNonNull(message);
@@ -71,6 +95,10 @@ public class Transformer {
             case INBOUND -> {
                 if (message instanceof Carrier carrier) {
                     var klass = this.packets.get(carrier.identity());
+
+                    if (klass == null) {
+                        return null;
+                    }
 
                     if (!this.isTimestampValid(carrier)) {
                         return null;
@@ -116,10 +144,25 @@ public class Transformer {
         }
     }
 
+    /**
+     * Validates the timestamp of an incoming carrier to mitigate simple replay attacks.
+     *
+     * @param carrier The inbound carrier packet.
+     * @return {@code true} if the timestamp is within the allowed time window, {@code false} otherwise.
+     */
     private boolean isTimestampValid(@NotNull Carrier carrier) {
         return Math.abs(System.currentTimeMillis() - carrier.timestamp()) <= Duration.ofSeconds(CACHE_EXPIRATION_TIME).toMillis();
     }
 
+    /**
+     * Processes the core data of a message, applying encryption or decryption as needed.
+     *
+     * @param context   The channel context.
+     * @param direction The direction of the message flow.
+     * @param object    The message object, either a {@link Carrier} or a {@link Packet}.
+     * @return The processed (e.g., decrypted or encrypted) byte array, or {@code null} on failure.
+     * @throws Exception if an error occurs during processing.
+     */
     private byte @Nullable [] process(ChannelContext context, Direction direction, Object object) throws Exception {
         IProcessor processor;
 
@@ -148,7 +191,7 @@ public class Transformer {
                     }
                 }
 
-                if (carrier.identity() != -PACKET_RULES_IGNORE) {
+                if (!ENCRYPTION_EXEMPT_IDS.contains(carrier.identity())) {
                     buffer = processor.processInbound(context, carrier.content());
                 }
             }
@@ -158,7 +201,7 @@ public class Transformer {
 
                 byte[] data = Serializer.serializeToArray(packet.getClass(), packet);
 
-                if (packet.getData().identity() != -PACKET_RULES_IGNORE) {
+                if (!ENCRYPTION_EXEMPT_IDS.contains(packet.getData().identity())) {
                     buffer = processor.processOutbound(context, data);
                 } else {
                     buffer = data;
