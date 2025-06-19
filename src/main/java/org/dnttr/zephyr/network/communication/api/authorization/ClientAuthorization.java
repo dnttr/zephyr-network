@@ -115,6 +115,7 @@ public final class ClientAuthorization extends Authorization {
         });
     }
 
+
     @EventSubscriber
     public void onHandshakeComplete(final ConnectionHandshakeComplete event) {
         var context = event.getContext();
@@ -124,7 +125,7 @@ public final class ClientAuthorization extends Authorization {
 
         this.getObserverManager().observe(SessionPrivatePacket.class, Direction.INBOUND, context).thenAccept(msg0 -> {
             var receivedMessage = (SessionPrivatePacket) msg0;
-            var responseState = new SessionStatePacket(SessionStatePacket.State.REGISTER_FINISH.getValue());
+            var responseFinishPacket = new SessionStatePacket(SessionStatePacket.State.REGISTER_FINISH.getValue());
 
             boolean isMessageProcessed = Security.processKeyExchange(context.getUuid(), receivedMessage.getKey());
 
@@ -133,14 +134,25 @@ public final class ClientAuthorization extends Authorization {
                 return;
             }
 
-            context.setEncryptionType(SYMMETRIC);
+            context.getChannel().writeAndFlush(responseFinishPacket).addListener(future -> {
+                if (future.isSuccess()) {
+                    context.setEncryptionType(SYMMETRIC);
 
-            this.getObserverManager().observe(SessionStatePacket.class, Direction.OUTBOUND, context).thenAccept(_ -> {
-                context.setReady(true);
+                    this.getObserverManager().observe(SessionStatePacket.class, Direction.INBOUND, context).thenAccept(msg1 -> {
+                        var responseConfirmationMessage = SessionStatePacket.State.from(((SessionStatePacket) msg1).getState());
 
-                this.getBus().call(new SessionEstablishedEvent(context.getConsumer()));
+                        if (responseConfirmationMessage == SessionStatePacket.State.REGISTER_CONFIRMATION) {
+                            context.setReady(true);
+
+                            this.getBus().call(new SessionEstablishedEvent(context.getConsumer()));
+                        } else {
+                            context.restrict("Invalid confirmation packet from server.");
+                        }
+                    });
+                } else {
+                    context.restrict("Failed to send REGISTER_FINISH packet.");
+                }
             });
-            context.getChannel().writeAndFlush(responseState);
         });
     }
 }

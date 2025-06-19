@@ -149,7 +149,6 @@ public final class ServerAuthorization extends Authorization {
                 SessionPrivatePacket responseKey = new SessionPrivatePacket(keyExchange.get());
 
                 context.getChannel().writeAndFlush(responseKey);
-                context.setEncryptionType(Security.EncryptionMode.SYMMETRIC);
             } else {
                 context.restrict("Invalid session state.");
             }
@@ -161,14 +160,24 @@ public final class ServerAuthorization extends Authorization {
         var context = event.getContext();
 
         this.getObserverManager().observe(SessionStatePacket.class, Direction.INBOUND, context).thenAccept(msg0 -> {
-            var receivedMessage = (SessionStatePacket) msg0;
+            var receivedStateMessage = (SessionStatePacket) msg0;
 
-            if (SessionStatePacket.State.from(receivedMessage.getState()) == SessionStatePacket.State.REGISTER_FINISH) {
-                context.setReady(true);
+            if (SessionStatePacket.State.from(receivedStateMessage.getState()) == SessionStatePacket.State.REGISTER_FINISH) {
+                context.setEncryptionType(Security.EncryptionMode.SYMMETRIC);
 
-                this.getBus().call(new SessionEstablishedEvent(context.getConsumer()));
+                var responseConfirmationMessage = new SessionStatePacket(SessionStatePacket.State.REGISTER_CONFIRMATION.getValue());
+
+                context.getChannel().writeAndFlush(responseConfirmationMessage).addListener(future -> {
+                    if (future.isSuccess()) {
+                        context.setReady(true);
+
+                        this.getBus().call(new SessionEstablishedEvent(context.getConsumer()));
+                    } else {
+                        context.restrict("Failed to send confirmation packet.");
+                    }
+                });
             } else {
-                context.restrict("Invalid session state.");
+                context.restrict("Invalid session state, expected REGISTER_FINISH.");
             }
         });
     }

@@ -25,7 +25,6 @@ public final class ClientChannelController extends ChannelController {
 
         this.getEventBus().register(new ClientAuthorization(this.getEventBus(), this.getObserverManager()));
         this.getEventBus().register(this);
-        this.getEventBus().register(session);
     }
 
     @Override

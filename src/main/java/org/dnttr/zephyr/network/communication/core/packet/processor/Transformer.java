@@ -123,7 +123,6 @@ public class Transformer {
 
                     int versionId = packet.getData().protocol();
                     int packetId = packet.getData().identity();
-
                     long timestamp = System.currentTimeMillis();
 
                     if (packetId != -0x3) {

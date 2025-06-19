@@ -49,7 +49,7 @@ public final class ChannelContext {
         this.uuid = Security.createSession();
         this.nonces = Caffeine
                 .newBuilder()
-                .expireAfterWrite(Duration.ofSeconds(25))
+                .expireAfterWrite(Duration.ofSeconds(10))
                 .buildAsync();
 
         Security.generateSigningKeyPair(this.uuid);
@@ -67,6 +67,7 @@ public final class ChannelContext {
     }
 
     public void restrict(@NotNull String reason) {
+        System.out.println(reason);
         this.restricted = true;
         this.restrictionReason = reason;
 

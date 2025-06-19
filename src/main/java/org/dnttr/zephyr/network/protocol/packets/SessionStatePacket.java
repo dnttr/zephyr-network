@@ -33,7 +33,8 @@ public class SessionStatePacket extends Packet {
 
         REGISTER_REQUEST(0x0),
         REGISTER_EXCHANGE(0x1),
-        REGISTER_FINISH(0x2);
+        REGISTER_FINISH(0x2),
+        REGISTER_CONFIRMATION(0x3);
 
         private final int value;
 

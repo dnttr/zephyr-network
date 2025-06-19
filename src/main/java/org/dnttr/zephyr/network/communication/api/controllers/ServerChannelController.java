@@ -23,7 +23,6 @@ public final class ServerChannelController extends ChannelController {
 
         this.getEventBus().register(new ServerAuthorization(this.getEventBus(), this.getObserverManager()));
         this.getEventBus().register(this);
-        this.getEventBus().register(session);
     }
 
     @Override

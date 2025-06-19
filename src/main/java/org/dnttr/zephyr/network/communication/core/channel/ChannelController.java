@@ -74,14 +74,14 @@ public class ChannelController {
         if (!context.isReady()) {
             return;
         }
+
+        this.eventBus.call(new PacketOutboundEvent(context.getConsumer(), msg));
     }
 
     public void fireWriteComplete(@NotNull ChannelContext context, @NotNull Packet msg) {
         if (!context.isReady()) {
             return;
         }
-
-        this.eventBus.call(new PacketOutboundEvent(context.getConsumer(), msg));
     }
 
     public void fireRestriction(@NotNull ChannelContext context, String reason) {
