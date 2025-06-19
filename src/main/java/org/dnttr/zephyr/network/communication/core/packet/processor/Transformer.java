@@ -43,7 +43,7 @@ public class Transformer {
                 ConnectionStatePacket.class,
                 ConnectionPrivatePacket.class,
                 ConnectionPublicPacket.class,
-                ConnectionNoncePacket.class,
+                ConnectionNoncePacket.class, //-0x3
                 ClientAvailabilityPacket.class
         );
 
@@ -73,13 +73,13 @@ public class Transformer {
                         return null;
                     }
 
-                    byte[] result = process(context, Direction.INBOUND, carrier);
+                    byte[] data = this.process(context, Direction.INBOUND, carrier);
 
-                    if (result == null) {
+                    if (data == null) {
                         return null;
                     }
 
-                    return Serializer.deserializeUsingBuffer(klass, Unpooled.wrappedBuffer(result));
+                    return Serializer.deserializeUsingBuffer(klass, Unpooled.wrappedBuffer(data));
                 } else {
                     throw new IllegalArgumentException("Inbound processing requires a Carrier message, but received: " + message.getClass().getSimpleName());
                 }
@@ -87,24 +87,23 @@ public class Transformer {
 
             case OUTBOUND -> {
                 if (message instanceof Packet packet) {
-                    byte[] processedPacket = this.process(context, Direction.OUTBOUND, packet);
+                    byte[] data = this.process(context, Direction.OUTBOUND, packet);
 
-                    if  (processedPacket == null) {
+                    if (data == null) {
+                        return null;
+                    }
+
+                    long timestamp = System.currentTimeMillis();
+                    byte[] hash = this.integrity.build(context, timestamp, data);
+
+                    if (hash == null) {
                         return null;
                     }
 
                     int versionId = packet.getData().protocol();
                     int packetId = packet.getData().identity();
-                    long timestamp = System.currentTimeMillis();
 
-
-                    byte[] computedHash = this.integrity.build(context, timestamp, processedPacket);
-
-                    if (computedHash == null) {
-                        return null;
-                    }
-
-                    return new Carrier(versionId, packetId, computedHash.length, processedPacket.length, timestamp, computedHash, processedPacket);
+                    return new Carrier(versionId, packetId, hash.length, data.length, timestamp, hash, data);
                 } else {
                     throw new IllegalArgumentException("Outbound processing requires a Packet type, but received: " + message.getClass().getSimpleName());
                 }
@@ -130,13 +129,13 @@ public class Transformer {
                     throw new IllegalArgumentException("Unrecognized cipher type");
         }
 
-        byte[] result = null;
+        byte[] buffer = null;
 
         switch (direction) {
             case INBOUND -> {
                 Carrier carrier = (Carrier) object;
 
-                result = carrier.content();
+                buffer = carrier.content();
 
                 if (carrier.hashSize() != 0 && context.isHash()) {
                     boolean isVerified = this.integrity.verify(context, carrier.timestamp(), carrier);
@@ -147,23 +146,23 @@ public class Transformer {
                 }
 
                 if (carrier.identity() != -0x3) {
-                    result = processor.processInbound(context, carrier.content());
+                    buffer = processor.processInbound(context, carrier.content());
                 }
             }
 
             case OUTBOUND -> {
                 Packet packet = (Packet) object;
 
-                byte[] serializedPacket = Serializer.serializeToArray(packet.getClass(), packet);
+                byte[] data = Serializer.serializeToArray(packet.getClass(), packet);
 
                 if (packet.getData().identity() != -0x3) {
-                    result = processor.processOutbound(context, serializedPacket);
+                    buffer = processor.processOutbound(context, data);
                 } else {
-                    result = serializedPacket;
+                    buffer = data;
                 }
             }
         }
 
-        return result;
+        return buffer;
     }
 }
