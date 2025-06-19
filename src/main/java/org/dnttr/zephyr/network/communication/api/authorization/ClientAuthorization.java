@@ -7,7 +7,7 @@ import org.dnttr.zephyr.network.communication.core.flow.Authorization;
 import org.dnttr.zephyr.network.communication.core.flow.events.internal.channel.*;
 import org.dnttr.zephyr.network.communication.core.flow.events.session.SessionEstablishedEvent;
 import org.dnttr.zephyr.network.communication.core.managers.ObserverManager;
-import org.dnttr.zephyr.network.communication.core.packet.processor.Direction;
+import org.dnttr.zephyr.network.communication.core.packet.Direction;
 import org.dnttr.zephyr.network.protocol.packets.internal.ConnectionStatePacket;
 import org.dnttr.zephyr.network.protocol.packets.internal.authorization.ConnectionNoncePacket;
 import org.dnttr.zephyr.network.protocol.packets.internal.authorization.ConnectionPrivatePacket;

@@ -9,7 +9,7 @@ import org.dnttr.zephyr.event.EventBus;
 import org.dnttr.zephyr.network.communication.api.Parent;
 import org.dnttr.zephyr.network.communication.api.controllers.ClientChannelController;
 import org.dnttr.zephyr.network.communication.core.managers.ObserverManager;
-import org.dnttr.zephyr.network.communication.core.packet.processor.Transformer;
+import org.dnttr.zephyr.network.communication.core.packet.transformer.TransformerFacade;
 import org.dnttr.zephyr.network.loader.core.Worker;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelHandler;
 import org.dnttr.zephyr.network.management.client.Child;
@@ -29,7 +29,7 @@ public class Client extends Worker {
     protected void construct(Parent session) {
         Bootstrap bootstrap = new Bootstrap();
 
-        ClientChannelController clientChannelController = new ClientChannelController(session, eventBus, new ObserverManager(this.eventBus), new Transformer());
+        ClientChannelController clientChannelController = new ClientChannelController(session, eventBus, new ObserverManager(this.eventBus), new TransformerFacade());
 
         bootstrap.
                 group(this.boss).

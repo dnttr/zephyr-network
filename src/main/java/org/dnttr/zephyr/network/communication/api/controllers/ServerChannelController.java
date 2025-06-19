@@ -7,7 +7,7 @@ import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelController;
 import org.dnttr.zephyr.network.communication.core.flow.events.internal.channel.ConnectionEstablishedEvent;
 import org.dnttr.zephyr.network.communication.core.managers.ObserverManager;
-import org.dnttr.zephyr.network.communication.core.packet.processor.Transformer;
+import org.dnttr.zephyr.network.communication.core.packet.transformer.TransformerFacade;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,8 +18,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class ServerChannelController extends ChannelController {
 
-    public ServerChannelController(@NotNull Parent session, @NotNull EventBus eventBus, @NotNull ObserverManager observerManager, @NotNull Transformer transformer) {
-        super(eventBus, observerManager, transformer);
+    public ServerChannelController(@NotNull Parent session, @NotNull EventBus eventBus, @NotNull ObserverManager observerManager, @NotNull TransformerFacade transformerFacade) {
+        super(eventBus, observerManager, transformerFacade);
 
         this.getEventBus().register(new ServerAuthorization(this.getEventBus(), this.getObserverManager()));
         this.getEventBus().register(this);

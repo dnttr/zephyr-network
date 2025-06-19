@@ -7,7 +7,7 @@ import org.dnttr.zephyr.network.communication.core.flow.Observer;
 import org.dnttr.zephyr.network.communication.core.flow.events.internal.observer.ObserverInboundPacketEvent;
 import org.dnttr.zephyr.network.communication.core.flow.events.internal.observer.ObserverOutboundPacketEvent;
 import org.dnttr.zephyr.network.protocol.Packet;
-import org.dnttr.zephyr.network.communication.core.packet.processor.Direction;
+import org.dnttr.zephyr.network.communication.core.packet.Direction;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

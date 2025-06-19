@@ -9,13 +9,10 @@ import org.dnttr.zephyr.network.communication.core.flow.events.packet.PacketOutb
 import org.dnttr.zephyr.network.communication.core.flow.events.session.SessionRestrictedEvent;
 import org.dnttr.zephyr.network.communication.core.flow.events.session.SessionTerminatedEvent;
 import org.dnttr.zephyr.network.communication.core.managers.ObserverManager;
-import org.dnttr.zephyr.network.communication.core.packet.processor.Transformer;
-import org.dnttr.zephyr.network.protocol.Data;
+import org.dnttr.zephyr.network.communication.core.packet.transformer.TransformerFacade;
 import org.dnttr.zephyr.network.protocol.Packet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * @author dnttr
@@ -32,15 +29,7 @@ public class ChannelController {
     private final ObserverManager observerManager;
 
     @Getter(AccessLevel.PACKAGE)
-    private final Transformer transformer;
-
-    public final void addPackets(@NotNull List<Class<? extends Packet>> packetClasses) {
-        packetClasses.stream().filter(klass -> klass.isAnnotationPresent(Data.class)).forEach(klass -> {
-            Data data = klass.getDeclaredAnnotation(Data.class);
-
-            this.getTransformer().getPackets().put(data.identity(), klass);
-        });
-    }
+    private final TransformerFacade transformerFacade;
 
     public void fireRead(@NotNull ChannelContext context, @NotNull Packet msg) {
         if (!context.isReady()) {

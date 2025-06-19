@@ -1,4 +1,4 @@
-package org.dnttr.zephyr.network.communication.core.packet.processor;
+package org.dnttr.zephyr.network.communication.core.packet;
 
 /**
  * @author dnttr

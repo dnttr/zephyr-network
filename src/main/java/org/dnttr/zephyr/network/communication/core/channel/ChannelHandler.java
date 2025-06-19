@@ -6,7 +6,7 @@ import org.dnttr.zephyr.network.bridge.Security;
 import org.dnttr.zephyr.network.communication.core.flow.events.internal.observer.ObserverInboundPacketEvent;
 import org.dnttr.zephyr.network.communication.core.flow.events.internal.observer.ObserverOutboundPacketEvent;
 import org.dnttr.zephyr.network.communication.core.packet.Carrier;
-import org.dnttr.zephyr.network.communication.core.packet.processor.Direction;
+import org.dnttr.zephyr.network.communication.core.packet.Direction;
 import org.dnttr.zephyr.network.communication.core.utilities.PacketUtils;
 import org.dnttr.zephyr.network.protocol.Packet;
 import org.dnttr.zephyr.network.protocol.packets.internal.authorization.ConnectionNoncePacket;
@@ -26,7 +26,7 @@ public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
 
     @Override
     protected void channelRead(ChannelContext context, Carrier input) throws Exception {
-        Packet packet = (Packet) this.controller.getTransformer().transform(Direction.INBOUND, input, context);
+        Packet packet = (Packet) this.controller.getTransformerFacade().transform(Direction.INBOUND, input, context);
 
         if (packet == null) {
             context.restrict("Unable to transform packet.");
@@ -98,7 +98,7 @@ public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
 
         this.controller.fireWrite(context, input);
 
-        Carrier carrier = (Carrier) this.controller.getTransformer().transform(Direction.OUTBOUND, input, context);
+        Carrier carrier = (Carrier) this.controller.getTransformerFacade().transform(Direction.OUTBOUND, input, context);
         this.eventBus.call(new ObserverOutboundPacketEvent(input, context));
 
         return carrier;

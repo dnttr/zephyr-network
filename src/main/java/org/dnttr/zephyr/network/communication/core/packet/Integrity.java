@@ -1,11 +1,10 @@
-package org.dnttr.zephyr.network.communication.core.packet.processor;
+package org.dnttr.zephyr.network.communication.core.packet;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import org.dnttr.zephyr.network.bridge.Security;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
-import org.dnttr.zephyr.network.communication.core.packet.Carrier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

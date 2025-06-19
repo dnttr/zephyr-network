@@ -4,7 +4,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
-import org.dnttr.zephyr.network.communication.core.packet.processor.Direction;
+import org.dnttr.zephyr.network.communication.core.packet.Direction;
 import org.dnttr.zephyr.network.protocol.Packet;
 
 import java.util.concurrent.CompletableFuture;
