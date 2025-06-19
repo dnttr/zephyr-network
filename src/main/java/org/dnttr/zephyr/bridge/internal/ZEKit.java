@@ -5,7 +5,7 @@
  * This source code is licensed under the MIT license.
  */
 
-package org.dnttr.zephyr.network.bridge.internal;
+package org.dnttr.zephyr.bridge.internal;
 
 import org.jetbrains.annotations.ApiStatus;
 

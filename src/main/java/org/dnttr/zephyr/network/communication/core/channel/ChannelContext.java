@@ -6,7 +6,7 @@ import io.netty.channel.Channel;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
-import org.dnttr.zephyr.network.bridge.Security;
+import org.dnttr.zephyr.bridge.Security;
 import org.dnttr.zephyr.network.communication.core.Consumer;
 import org.dnttr.zephyr.network.protocol.Packet;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 
-import static org.dnttr.zephyr.network.bridge.Security.EncryptionMode.NONE;
+import static org.dnttr.zephyr.bridge.Security.EncryptionMode.NONE;
 
 /**
  * @author dnttr

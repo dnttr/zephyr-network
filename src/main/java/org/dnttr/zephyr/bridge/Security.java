@@ -4,15 +4,14 @@
  *
  * This source code is licensed under the MIT license.
  */
-package org.dnttr.zephyr.network.bridge;
+package org.dnttr.zephyr.bridge;
 
 import lombok.Getter;
-import org.dnttr.zephyr.network.bridge.internal.ZEKit;
+import org.dnttr.zephyr.bridge.internal.ZEKit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 

@@ -2,7 +2,7 @@ package org.dnttr.zephyr.network.communication.api.server.flow;
 
 import org.dnttr.zephyr.event.EventBus;
 import org.dnttr.zephyr.event.EventSubscriber;
-import org.dnttr.zephyr.network.bridge.Security;
+import org.dnttr.zephyr.bridge.Security;
 import org.dnttr.zephyr.network.communication.core.flow.Orchestrator;
 import org.dnttr.zephyr.network.communication.core.flow.events.internal.channel.*;
 import org.dnttr.zephyr.network.communication.core.flow.events.session.SessionEstablishedEvent;

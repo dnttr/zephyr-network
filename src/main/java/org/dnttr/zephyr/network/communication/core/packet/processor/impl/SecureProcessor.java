@@ -1,6 +1,6 @@
 package org.dnttr.zephyr.network.communication.core.packet.processor.impl;
 
-import org.dnttr.zephyr.network.bridge.Security;
+import org.dnttr.zephyr.bridge.Security;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.packet.processor.IProcessor;
 import org.jetbrains.annotations.NotNull;

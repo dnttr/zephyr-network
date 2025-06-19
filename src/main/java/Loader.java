@@ -1,5 +1,3 @@
-package org.dnttr.zephyr;
-
 /**
  * @author dnttr
  */

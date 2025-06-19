@@ -2,7 +2,7 @@ package org.dnttr.zephyr.network.communication.api.client.flow;
 
 import org.dnttr.zephyr.event.EventBus;
 import org.dnttr.zephyr.event.EventSubscriber;
-import org.dnttr.zephyr.network.bridge.Security;
+import org.dnttr.zephyr.bridge.Security;
 import org.dnttr.zephyr.network.communication.core.flow.Orchestrator;
 import org.dnttr.zephyr.network.communication.core.flow.events.internal.channel.*;
 import org.dnttr.zephyr.network.communication.core.flow.events.session.SessionEstablishedEvent;
@@ -13,7 +13,7 @@ import org.dnttr.zephyr.network.protocol.packets.internal.authorization.Connecti
 import org.dnttr.zephyr.network.protocol.packets.internal.authorization.ConnectionPrivatePacket;
 import org.dnttr.zephyr.network.protocol.packets.internal.authorization.ConnectionPublicPacket;
 
-import static org.dnttr.zephyr.network.bridge.Security.EncryptionMode.SYMMETRIC;
+import static org.dnttr.zephyr.bridge.Security.EncryptionMode.SYMMETRIC;
 
 /**
  * @author dnttr
