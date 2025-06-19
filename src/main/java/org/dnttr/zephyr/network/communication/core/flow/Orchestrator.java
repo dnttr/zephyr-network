@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * @author dnttr
  */
 
-public abstract class Authorization {
+public abstract class Orchestrator {
 
     @Getter(AccessLevel.PROTECTED)
     private final ObserverManager observerManager;
@@ -20,7 +20,7 @@ public abstract class Authorization {
     @Getter(AccessLevel.PROTECTED)
     private final EventBus bus;
 
-    public Authorization(final @NotNull EventBus bus, final @NotNull ObserverManager manager) {
+    public Orchestrator(final @NotNull EventBus bus, final @NotNull ObserverManager manager) {
         this.bus = bus;
         this.observerManager = manager;
     }

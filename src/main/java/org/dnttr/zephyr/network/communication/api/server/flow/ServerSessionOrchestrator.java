@@ -1,9 +1,9 @@
-package org.dnttr.zephyr.network.communication.api.authorization;
+package org.dnttr.zephyr.network.communication.api.server.flow;
 
 import org.dnttr.zephyr.event.EventBus;
 import org.dnttr.zephyr.event.EventSubscriber;
 import org.dnttr.zephyr.network.bridge.Security;
-import org.dnttr.zephyr.network.communication.core.flow.Authorization;
+import org.dnttr.zephyr.network.communication.core.flow.Orchestrator;
 import org.dnttr.zephyr.network.communication.core.flow.events.internal.channel.*;
 import org.dnttr.zephyr.network.communication.core.flow.events.session.SessionEstablishedEvent;
 import org.dnttr.zephyr.network.communication.core.managers.ObserverManager;
@@ -17,9 +17,9 @@ import org.dnttr.zephyr.network.protocol.packets.internal.authorization.Connecti
  * @author dnttr
  */
 
-public final class ServerAuthorization extends Authorization {
+public final class ServerSessionOrchestrator extends Orchestrator {
 
-    public ServerAuthorization(EventBus bus, ObserverManager observerManager) {
+    public ServerSessionOrchestrator(EventBus bus, ObserverManager observerManager) {
         super(bus, observerManager);
     }
 

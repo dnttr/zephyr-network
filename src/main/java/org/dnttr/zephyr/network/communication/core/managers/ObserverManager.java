@@ -1,6 +1,5 @@
 package org.dnttr.zephyr.network.communication.core.managers;
 
-import org.dnttr.zephyr.event.EventBus;
 import org.dnttr.zephyr.event.EventSubscriber;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.flow.Observer;
@@ -23,10 +22,8 @@ public final class ObserverManager {
 
     private final Map<Class<? extends Packet>, List<Observer>> observers;
 
-    public ObserverManager(@NotNull EventBus bus) {
+    public ObserverManager() {
         this.observers = new ConcurrentHashMap<>();
-
-        bus.register(this);
     }
 
     public <T extends Packet> Observer observe(@NotNull Class<T> packetClass, @NotNull Direction direction, @NotNull ChannelContext context)

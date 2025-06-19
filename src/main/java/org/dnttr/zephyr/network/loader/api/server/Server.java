@@ -6,15 +6,13 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.MultiThreadIoEventLoopGroup;
 import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import lombok.SneakyThrows;
 import org.dnttr.zephyr.event.EventBus;
-import org.dnttr.zephyr.network.communication.api.Parent;
-import org.dnttr.zephyr.network.communication.api.controllers.ServerChannelController;
+import org.dnttr.zephyr.network.communication.api.server.ServerChannelController;
+import org.dnttr.zephyr.network.communication.api.server.flow.ServerSessionEndpoint;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelHandler;
 import org.dnttr.zephyr.network.communication.core.managers.ObserverManager;
 import org.dnttr.zephyr.network.communication.core.packet.transformer.TransformerFacade;
 import org.dnttr.zephyr.network.loader.core.Worker;
-import org.dnttr.zephyr.network.management.server.Child;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.InetSocketAddress;
@@ -23,18 +21,19 @@ public final class Server extends Worker {
 
     private final MultiThreadIoEventLoopGroup child;
 
-    public Server(@NotNull EventBus eventBus, @NotNull InetSocketAddress socketAddress) {
-        super(eventBus, socketAddress, new Child());
+    public Server(@NotNull InetSocketAddress socketAddress) {
+        super(new EventBus(), socketAddress, new ObserverManager(), new ServerSessionEndpoint());
 
         this.child = new MultiThreadIoEventLoopGroup(0, NioIoHandler.newFactory());
         this.environment.execute();
     }
 
-    @SneakyThrows
     @Override
-    protected void construct(Parent session) {
-        ServerBootstrap bootstrap = new ServerBootstrap();
-        ServerChannelController controller = new ServerChannelController(session, this.eventBus, new ObserverManager(this.eventBus), new TransformerFacade());
+    protected void construct() {
+        final ServerBootstrap bootstrap = new ServerBootstrap();
+        final TransformerFacade facade = new TransformerFacade();
+        final ServerChannelController controller = new ServerChannelController(this.eventBus, this.observerManager, facade);
+
         ChannelHandler handler = new ChannelHandler(controller, this.eventBus);
 
         bootstrap.
@@ -45,8 +44,20 @@ public final class Server extends Worker {
                 channel(NioServerSocketChannel.class).
                 childHandler(handler);
 
-        ChannelFuture channelFuture = bootstrap.bind(getAddress()).sync();
-        channelFuture.channel().closeFuture().sync();
+        try {
+            ChannelFuture future = bootstrap.bind(getAddress()).sync();
+            future.addListener(f -> {
+                if (f.isSuccess()) {
+                    System.out.println("Server has been successfully started.");
+                }
+            });
+
+            future.channel().closeFuture().sync();
+        } catch (Exception _) {
+            System.out.println("Unable to bind server channel to " + getAddress());
+        } finally {
+            destroy();
+        }
     }
 
     @Override
