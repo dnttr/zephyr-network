@@ -40,14 +40,18 @@ public class InboundTransformer extends Transformer<Carrier> {
     }
 
     @Override
-    protected byte[] process(@NotNull ChannelContext context, @NotNull Carrier message) throws Exception {
+    protected byte[] process(@NotNull ChannelContext context, @NotNull Carrier message) {
         byte[] buffer = message.content();
 
-        if (message.hashSize() != 0 && context.isHash()) {
-            boolean isVerified = getIntegrity().verify(context, message.timestamp(), message);
+        if (context.isHash()) {
+            boolean isExempt = message.identity() == -1 || message.identity() == -2;
 
-            if (!isVerified) {
-                return null;
+            if (!isExempt) {
+                boolean isVerified = getIntegrity().verify(context, message.timestamp(), message);
+
+                if (!isVerified) {
+                    return null;
+                }
             }
         }
 
