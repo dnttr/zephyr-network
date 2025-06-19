@@ -1,4 +1,4 @@
-package org.dnttr.zephyr.network.protocol.packets.client;
+package org.dnttr.zephyr.network.protocol.packets.server;
 
 /**
  * @author dnttr

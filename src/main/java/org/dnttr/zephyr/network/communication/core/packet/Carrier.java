@@ -1,6 +1,6 @@
 package org.dnttr.zephyr.network.communication.core.packet;
 
-import java.util.Arrays;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dnttr
@@ -9,15 +9,13 @@ import java.util.Arrays;
 public record Carrier(int version, int identity, int hashSize, int contentSize, long timestamp, byte[] hash, byte[] content) {
 
     @Override
-    public String toString() {
+    public @NotNull String toString() {
         return "Carrier{" +
                 "version=" + version +
                 ", identity=" + identity +
                 ", hashSize=" + hashSize +
                 ", contentSize=" + contentSize +
                 ", timestamp=" + timestamp +
-                ", hash=" + Arrays.toString(hash) +
-                ", content=" + Arrays.toString(content) +
                 '}';
     }
 }

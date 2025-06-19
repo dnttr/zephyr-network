@@ -30,9 +30,8 @@ public final class Server extends Worker<ServerBootstrap> {
 
     @Override
     protected void construct(ServerBootstrap bootstrap) {
-        final TransformerFacade facade = new TransformerFacade();
-
-        final ServerChannelController controller = new ServerChannelController(this.eventBus, this.observerManager, facade);
+        var facade = new TransformerFacade();
+        var controller = new ServerChannelController(this.eventBus, this.observerManager, facade);
 
         bootstrap.
                 group(this.boss, child).

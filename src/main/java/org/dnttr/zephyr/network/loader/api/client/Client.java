@@ -24,9 +24,8 @@ public class Client extends Worker<Bootstrap> {
 
     @Override
     protected void construct(Bootstrap bootstrap) {
-        final TransformerFacade facade = new TransformerFacade();
-
-        final ClientChannelController controller = new ClientChannelController(this.eventBus, this.observerManager, facade);
+        var facade = new TransformerFacade();
+        var controller = new ClientChannelController(this.eventBus, this.observerManager, facade);
 
         bootstrap.
                 group(this.boss).

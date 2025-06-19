@@ -28,9 +28,6 @@ public final class ClientSessionOrchestrator extends Orchestrator {
     @EventSubscriber
     public void onEstablished(final ConnectionEstablishedEvent event) {
         var context = event.getContext();
-        var packet = new ConnectionStatePacket(ConnectionStatePacket.State.REGISTER_OPEN.getValue());
-
-        context.getChannel().writeAndFlush(packet);
 
         this.getObserverManager().observe(ConnectionPublicPacket.class, Direction.INBOUND, context).thenAccept(msg0 -> {
             var receivedMessage = (ConnectionPublicPacket) msg0;

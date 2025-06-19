@@ -67,7 +67,6 @@ public final class ChannelContext {
     }
 
     public void restrict(@NotNull String reason) {
-        System.out.println(reason);
         this.restricted = true;
         this.restrictionReason = reason;
 
