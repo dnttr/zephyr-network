@@ -54,7 +54,7 @@ public final class ChannelContext {
 
         Security.generateSigningKeyPair(this.uuid);
 
-        this.consumer = new Consumer() {
+        this.consumer = new Consumer(this.uuid) {
             @Override
             public void send(Packet packet) {
                 if (!ready) {
