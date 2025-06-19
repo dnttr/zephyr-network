@@ -45,9 +45,6 @@ public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
                 this.recordNonce(context, nonce);
 
                 Security.setNonce(context.getUuid(), Security.EncryptionMode.SYMMETRIC, nonce);
-
-                System.out.println("ENC/INC");
-                incrementNonce(context);
             }
         }
 
@@ -84,17 +81,12 @@ public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
                 var nonceOpt = Security.getNonce(context.getUuid(), Security.EncryptionMode.SYMMETRIC);
 
                 if (nonceOpt.isPresent()) {
-                    System.out.println("DEC/INC" + input);
-
                     byte[] nonce = nonceOpt.get();
-                    incrementNonce(context);
 
                     if (this.isNoncePresent(context, nonce)) {
                         context.restrict("Such nonce is already in use.");
                         return null;
                     }
-
-                    System.out.println("OK");
 
                     SessionNoncePacket noncePacket = new SessionNoncePacket(Security.EncryptionMode.SYMMETRIC.getValue(), nonce);
                     context.getChannel().writeAndFlush(noncePacket);
@@ -107,7 +99,6 @@ public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
         this.controller.fireWrite(context, input);
 
         Carrier carrier = (Carrier) this.controller.getTransformer().transform(Direction.OUTBOUND, input, context);
-
         this.eventBus.call(new ObserverOutboundPacketEvent(input, context));
 
         return carrier;
@@ -120,17 +111,6 @@ public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
         }
 
         this.controller.fireWriteComplete(context, input);
-    }
-
-    private void incrementNonce(ChannelContext context) {
-        Security.getNonce(context.getUuid(), Security.EncryptionMode.SYMMETRIC).ifPresent(nonce -> {
-            for (int i = nonce.length - 1; i >= 0; i--) {
-                nonce[i]++;
-                if (nonce[i] != 0) break;
-            }
-
-            Security.setNonce(context.getUuid(), Security.EncryptionMode.SYMMETRIC, nonce);
-        });
     }
 
     private void recordNonce(ChannelContext context, byte[] nonce) {
