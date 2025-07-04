@@ -3,10 +3,12 @@ package network;
 import org.dnttr.zephyr.network.loader.api.client.Client;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import java.io.File;
 import java.net.InetSocketAddress;
 
+@EnabledIfEnvironmentVariable(named = "EXTERNAL_LIBS", matches = ".+")
 public class ClientTest {
 
     @BeforeAll

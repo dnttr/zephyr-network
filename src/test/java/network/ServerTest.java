@@ -3,10 +3,12 @@ package network;
 import org.dnttr.zephyr.network.loader.api.server.Server;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import java.io.File;
 import java.net.InetSocketAddress;
 
+@EnabledIfEnvironmentVariable(named = "EXTERNAL_LIBS", matches = ".+")
 public class ServerTest {
 
     @BeforeAll
@@ -24,6 +26,6 @@ public class ServerTest {
 
     @Test
     public void init() {
-        new Server(new InetSocketAddress(2137));
+        new Server(new InetSocketAddress(12345));
     }
 }

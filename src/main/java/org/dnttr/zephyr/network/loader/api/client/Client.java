@@ -43,7 +43,9 @@ public class Client extends Worker<Bootstrap> {
                 }
             }).sync();
 
-            future.channel().closeFuture().sync();
+            future.channel().closeFuture().addListener(f -> {
+                destroy();
+            });
         } catch (Exception _) {
             System.out.println("Unable to connect to " + getAddress());
         } finally {
@@ -52,7 +54,7 @@ public class Client extends Worker<Bootstrap> {
     }
 
     @Override
-    protected void destroy() {
+    public void destroy() {
         this.boss.shutdownGracefully();
     }
 }

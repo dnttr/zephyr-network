@@ -2,12 +2,14 @@ import org.dnttr.zephyr.bridge.internal.ZEKit;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import java.io.File;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ZEKitTest {
+@EnabledIfEnvironmentVariable(named = "EXTERNAL_LIBS", matches = ".+")
+    class ZEKitTest {
 
     private static long sessionId;
 

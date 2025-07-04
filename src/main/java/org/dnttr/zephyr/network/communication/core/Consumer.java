@@ -1,14 +1,14 @@
 package org.dnttr.zephyr.network.communication.core;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.dnttr.zephyr.network.protocol.Packet;
 
 /**
  * @author dnttr
  */
 
-@RequiredArgsConstructor
+@AllArgsConstructor
 public abstract class Consumer {
 
     @Getter
