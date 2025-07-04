@@ -171,7 +171,7 @@ public final class ServerSessionOrchestrator extends Orchestrator {
                     if (future.isSuccess()) {
                         context.setReady(true);
 
-                        this.getBus().call(new SessionEstablishedEvent(context.getConsumer()));
+                        this.getBus().call(new SessionEstablishedEvent(context, context.getConsumer()));
                     } else {
                         context.restrict("Failed to send confirmation packet.");
                     }

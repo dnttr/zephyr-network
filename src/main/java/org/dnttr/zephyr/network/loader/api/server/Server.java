@@ -12,7 +12,6 @@ import org.dnttr.zephyr.network.communication.api.server.flow.ServerSessionEndpo
 import org.dnttr.zephyr.network.communication.core.channel.ChannelHandler;
 import org.dnttr.zephyr.network.communication.core.managers.ObserverManager;
 import org.dnttr.zephyr.network.communication.core.packet.transformer.TransformerFacade;
-import org.dnttr.zephyr.network.loader.core.Environment;
 import org.dnttr.zephyr.network.loader.core.Worker;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +24,7 @@ public final class Server extends Worker<ServerBootstrap> {
     public Server(@NotNull InetSocketAddress socketAddress) {
         super(socketAddress, new EventBus(), new ServerBootstrap(), new ObserverManager(), new ServerSessionEndpoint());
 
-        this.child = new MultiThreadIoEventLoopGroup(0, Environment.DAEMON_THREAD_FACTORY, NioIoHandler.newFactory());
+        this.child = new MultiThreadIoEventLoopGroup(0, NioIoHandler.newFactory());
         this.environment.execute();
     }
 

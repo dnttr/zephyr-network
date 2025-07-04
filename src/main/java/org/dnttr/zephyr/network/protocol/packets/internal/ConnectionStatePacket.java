@@ -26,7 +26,6 @@ public class ConnectionStatePacket extends Packet {
         this.state = state;
     }
 
-
     @Getter
     @RequiredArgsConstructor
     public enum State {

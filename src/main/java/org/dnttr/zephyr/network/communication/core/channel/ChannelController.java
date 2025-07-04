@@ -10,6 +10,7 @@ import org.dnttr.zephyr.network.communication.core.flow.events.session.SessionRe
 import org.dnttr.zephyr.network.communication.core.flow.events.session.SessionTerminatedEvent;
 import org.dnttr.zephyr.network.communication.core.managers.ObserverManager;
 import org.dnttr.zephyr.network.communication.core.packet.transformer.TransformerFacade;
+import org.dnttr.zephyr.network.communication.core.utilities.PacketUtils;
 import org.dnttr.zephyr.network.protocol.Packet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +37,12 @@ public class ChannelController {
             return;
         }
 
+        if (PacketUtils.isReserved(msg.getData().identity()) && msg.getData().identity() != -5 /* Connection identifier packet */) {
+            return;
+        }
+
         this.eventBus.call(new PacketInboundEvent(context.getConsumer(), msg));
+
     }
 
     public void fireReadComplete(@NotNull ChannelContext context) {

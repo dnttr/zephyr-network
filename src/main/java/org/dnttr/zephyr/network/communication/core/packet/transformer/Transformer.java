@@ -12,6 +12,7 @@ import org.dnttr.zephyr.network.protocol.Data;
 import org.dnttr.zephyr.network.protocol.Packet;
 import org.dnttr.zephyr.network.protocol.packets.client.ClientAvailabilityPacket;
 import org.dnttr.zephyr.network.protocol.packets.internal.ConnectionStatePacket;
+import org.dnttr.zephyr.network.protocol.packets.internal.ConnectionIdentifierPacket;
 import org.dnttr.zephyr.network.protocol.packets.internal.authorization.ConnectionNoncePacket;
 import org.dnttr.zephyr.network.protocol.packets.internal.authorization.ConnectionPrivatePacket;
 import org.dnttr.zephyr.network.protocol.packets.internal.authorization.ConnectionPublicPacket;
@@ -44,6 +45,7 @@ public abstract class Transformer<I> {
                 ConnectionPrivatePacket.class,
                 ConnectionPublicPacket.class,
                 ConnectionNoncePacket.class,
+                ConnectionIdentifierPacket.class,
                 ClientAvailabilityPacket.class
         );
 

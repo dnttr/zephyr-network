@@ -141,7 +141,7 @@ public final class ClientSessionOrchestrator extends Orchestrator {
                         if (responseConfirmationMessage == ConnectionStatePacket.State.REGISTER_CONFIRM) {
                             context.setReady(true);
 
-                            this.getBus().call(new SessionEstablishedEvent(context.getConsumer()));
+                            this.getBus().call(new SessionEstablishedEvent(context, context.getConsumer()));
                         } else {
                             context.restrict("Invalid confirmation packet from server.");
                         }

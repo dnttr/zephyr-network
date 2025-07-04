@@ -43,9 +43,7 @@ public class Client extends Worker<Bootstrap> {
                 }
             }).sync();
 
-            future.channel().closeFuture().addListener(f -> {
-                destroy();
-            });
+            future.channel().closeFuture().sync();
         } catch (Exception _) {
             System.out.println("Unable to connect to " + getAddress());
         } finally {

@@ -26,6 +26,6 @@ public class ClientTest {
 
     @Test
     public void init() {
-        new Client(new InetSocketAddress(2137));
+        new Client(new InetSocketAddress(12345));
     }
 }

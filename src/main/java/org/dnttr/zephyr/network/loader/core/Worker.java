@@ -39,7 +39,7 @@ public abstract class Worker<B> {
         this.bootstrap = bootstrap;
 
         this.observerManager = observerManager;
-        this.boss = new MultiThreadIoEventLoopGroup(1, Environment.DAEMON_THREAD_FACTORY, NioIoHandler.newFactory());
+        this.boss = new MultiThreadIoEventLoopGroup(1, NioIoHandler.newFactory());
         this.environment = new Environment(this);
 
         this.endpoint = endpoint;
