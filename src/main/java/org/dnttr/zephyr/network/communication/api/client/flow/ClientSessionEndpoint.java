@@ -4,6 +4,7 @@ import org.dnttr.zephyr.event.EventBus;
 import org.dnttr.zephyr.event.EventSubscriber;
 import org.dnttr.zephyr.network.communication.api.Endpoint;
 import org.dnttr.zephyr.network.communication.core.Consumer;
+import org.dnttr.zephyr.network.communication.core.flow.events.internal.channel.ConnectionFatalEvent;
 import org.dnttr.zephyr.network.communication.core.flow.events.ipc.recv.*;
 import org.dnttr.zephyr.network.communication.core.flow.events.ipc.send.*;
 import org.dnttr.zephyr.network.communication.core.flow.events.packet.PacketInboundEvent;
@@ -19,7 +20,7 @@ import org.dnttr.zephyr.network.protocol.packets.shared.ChatMessagePacket;
 public class ClientSessionEndpoint extends Endpoint {
 
     private final EventBus eventBus;
-    private Consumer consumer;
+    private volatile Consumer consumer;
 
     public ClientSessionEndpoint(ObserverManager observerManager, EventBus eventBus) {
         super(observerManager);
@@ -38,6 +39,8 @@ public class ClientSessionEndpoint extends Endpoint {
     public void onIdentifyCommand(final IdentifyCommand command) {
         if (this.consumer == null) {
             this.eventBus.call(new IdentificationFailureEvent("No active network connection to identify."));
+            this.eventBus.call(new ConnectionFatalEvent("No active network connection to identify. Terminating session."));
+
             return;
         }
 
@@ -45,6 +48,8 @@ public class ClientSessionEndpoint extends Endpoint {
             this.consumer.send(new ConnectionIdentifierPacket(command.getName()));
         } catch (Exception e) {
             System.err.printf("[CLIENT-ERROR] Failed to send ConnectionIdentifierPacket: %s%n", e.getMessage());
+
+            this.eventBus.call(new ConnectionFatalEvent("Failed to send ConnectionIdentifierPacket. Terminating session."));
         }
     }
 
@@ -89,8 +94,10 @@ public class ClientSessionEndpoint extends Endpoint {
             case ChatMessagePacket packet ->
                     eventBus.call(new IncomingChatMessageEvent(packet.getMessage()));
 
-            case ConnectionIdentifierRefusedPacket packet ->
+            case ConnectionIdentifierRefusedPacket packet -> {
                     eventBus.call(new IdentificationFailureEvent(packet.getReason()));
+                    eventBus.call(new ConnectionFatalEvent("ConnectionIdentifierRefusedPacket. Terminating session."));
+            }
 
             case ConnectionRelayRequest packet ->
                     eventBus.call(new IncomingRelayRequestEvent(packet.getName()));
@@ -105,6 +112,7 @@ public class ClientSessionEndpoint extends Endpoint {
             case ConnectionRelayTerminatePacket packet -> {
                 event.getConsumer().setFree(true);
                 eventBus.call(new RelayTerminatedEvent(packet.getReason()));
+                eventBus.call(new ConnectionFatalEvent("Relay terminated. Terminating session."));
             }
 
             case ConnectionRelayResponse packet -> {
@@ -114,6 +122,7 @@ public class ClientSessionEndpoint extends Endpoint {
                 } else {
                     event.getConsumer().setFree(true);
                     eventBus.call(new RelayRefusedEvent());
+                    eventBus.call(new ConnectionFatalEvent("Relay refused. Terminating session."));
                 }
             }
 

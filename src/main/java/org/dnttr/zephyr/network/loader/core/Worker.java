@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.dnttr.zephyr.event.EventBus;
 import org.dnttr.zephyr.network.communication.api.Endpoint;
+import org.dnttr.zephyr.network.communication.core.flow.events.internal.management.ManagerTerminationEvent;
 import org.dnttr.zephyr.network.communication.core.managers.ObserverManager;
 
 import java.net.InetSocketAddress;
@@ -44,7 +45,8 @@ public abstract class Worker<B> {
 
         this.endpoint = endpoint;
 
-        endpoint.setParent(this);
+        this.eventBus.register(this);
+        this.endpoint.setParent(this);
     }
 
     final void construct0() {
@@ -60,4 +62,10 @@ public abstract class Worker<B> {
     protected abstract void execute(B bootstrap);
 
     public abstract void destroy();
+
+    public void destroy0() {
+        this.eventBus.call(new ManagerTerminationEvent());
+
+        destroy();
+    }
 }

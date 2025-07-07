@@ -16,7 +16,7 @@ public class Environment {
         } catch (Exception ex) {
             ex.printStackTrace();
         } finally {
-            this.worker.destroy();
+            this.worker.destroy0();
         }
     }
 
