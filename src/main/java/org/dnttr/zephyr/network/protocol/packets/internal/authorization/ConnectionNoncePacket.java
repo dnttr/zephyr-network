@@ -14,7 +14,7 @@ import static org.dnttr.zephyr.network.protocol.Constants.VER_1;
 
 @Getter
 @Serializable
-@Data(identity = -0x3, protocol = VER_1)
+@Data(identity = -3, protocol = VER_1)
 public final class ConnectionNoncePacket extends Packet {
 
     @Address(address = "nonceMode")

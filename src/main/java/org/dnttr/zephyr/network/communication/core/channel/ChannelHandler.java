@@ -1,8 +1,7 @@
 package org.dnttr.zephyr.network.communication.core.channel;
 
-import lombok.RequiredArgsConstructor;
-import org.dnttr.zephyr.event.EventBus;
 import org.dnttr.zephyr.bridge.Security;
+import org.dnttr.zephyr.event.EventBus;
 import org.dnttr.zephyr.network.communication.core.flow.events.internal.observer.ObserverInboundPacketEvent;
 import org.dnttr.zephyr.network.communication.core.flow.events.internal.observer.ObserverOutboundPacketEvent;
 import org.dnttr.zephyr.network.communication.core.packet.Carrier;
@@ -18,11 +17,16 @@ import java.nio.ByteBuffer;
  * @author dnttr
  */
 
-@RequiredArgsConstructor
 public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
 
     private final ChannelController controller;
     private final EventBus eventBus;
+
+    public ChannelHandler(ChannelController controller, EventBus eventBus, boolean timeout) {
+        super(timeout);
+        this.controller = controller;
+        this.eventBus = eventBus;
+    }
 
     @Override
     protected void channelRead(ChannelContext context, Carrier input) throws Exception {
@@ -45,7 +49,12 @@ public final class ChannelHandler extends ChannelAdapter<Packet, Carrier> {
                 this.recordNonce(context, nonce);
 
                 Security.setNonce(context.getUuid(), Security.EncryptionMode.SYMMETRIC, nonce);
+
             }
+        }
+
+        if (input.identity() == -12) {
+            return;
         }
 
         this.controller.fireRead(context, packet);

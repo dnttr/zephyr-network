@@ -3,6 +3,7 @@ package org.dnttr.zephyr.network.communication.api.client.flow;
 import org.dnttr.zephyr.event.EventBus;
 import org.dnttr.zephyr.event.EventSubscriber;
 import org.dnttr.zephyr.bridge.Security;
+import org.dnttr.zephyr.network.communication.api.client.heartbeat.Heartbeat;
 import org.dnttr.zephyr.network.communication.core.flow.Orchestrator;
 import org.dnttr.zephyr.network.communication.core.flow.events.internal.channel.*;
 import org.dnttr.zephyr.network.communication.core.flow.events.session.SessionEstablishedEvent;
@@ -21,13 +22,19 @@ import static org.dnttr.zephyr.bridge.Security.EncryptionMode.SYMMETRIC;
 
 public final class ClientSessionOrchestrator extends Orchestrator {
 
+    private final Heartbeat heartbeat;
+
     public ClientSessionOrchestrator(EventBus bus, ObserverManager observerManager) {
         super(bus, observerManager);
+
+        this.heartbeat = new Heartbeat();
     }
 
     @EventSubscriber
     public void onEstablished(final ConnectionEstablishedEvent event) {
         var context = event.getContext();
+
+        this.heartbeat.startHeartbeat(context);
 
         this.getObserverManager().observe(ConnectionPublicPacket.class, Direction.INBOUND, context).thenAccept(msg0 -> {
             var receivedMessage = (ConnectionPublicPacket) msg0;

@@ -21,8 +21,8 @@ public final class Server extends Worker<ServerBootstrap> {
 
     private final MultiThreadIoEventLoopGroup child;
 
-    public Server(@NotNull InetSocketAddress socketAddress) {
-        super(socketAddress, new EventBus(), new ServerBootstrap(), new ObserverManager(), new ServerSessionEndpoint());
+    public Server(@NotNull InetSocketAddress socketAddress, EventBus eventBus, ObserverManager observerManager) {
+        super(socketAddress, eventBus, new ServerBootstrap(), observerManager, new ServerSessionEndpoint(observerManager));
 
         this.child = new MultiThreadIoEventLoopGroup(0, NioIoHandler.newFactory());
         this.environment.execute();
@@ -39,7 +39,7 @@ public final class Server extends Worker<ServerBootstrap> {
                 childOption(ChannelOption.SO_KEEPALIVE, true).
                 childOption(ChannelOption.TCP_NODELAY, true).
                 channel(NioServerSocketChannel.class).
-                childHandler(new ChannelHandler(controller, this.eventBus));
+                childHandler(new ChannelHandler(controller, this.eventBus, true));
     }
 
     @Override
@@ -47,13 +47,13 @@ public final class Server extends Worker<ServerBootstrap> {
         try {
             ChannelFuture future = bootstrap.bind(getAddress()).addListener(f -> {
                 if (f.isSuccess()) {
-                    System.out.println("Server bound to " + getAddress());
+                    System.err.println("Server bound to " + getAddress());
                 }
             }).sync();
 
             future.channel().closeFuture().sync();
         } catch (Exception _) {
-            System.out.println("Unable to bind server channel to " + getAddress());
+            System.err.println("Unable to bind server channel to " + getAddress());
         } finally {
             destroy();
         }

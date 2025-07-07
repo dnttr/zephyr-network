@@ -16,17 +16,15 @@ import java.util.List;
 
 public class PacketDecoder extends ByteToMessageDecoder {
 
-    private final int requiredBytes = 4 * Type.INT.getBytes();
+    public static final int HEADER_SIZE = (4 * Type.INT.getBytes()) + Type.LONG.getBytes();
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf buffer, List<Object> objects) {
-        while (buffer.readableBytes() >= requiredBytes) {
+        while (buffer.readableBytes() >= HEADER_SIZE) {
             buffer.markReaderIndex();
 
             int version = buffer.readInt();
-
             if (version != Constants.VER_1) {
-                //there is no other version in fact
                 ctx.channel().disconnect();
                 return;
             }
@@ -36,25 +34,26 @@ public class PacketDecoder extends ByteToMessageDecoder {
             int contentSize = buffer.readInt();
             long timestamp = buffer.readLong();
 
-            int totalPacketLength = hashSize + contentSize;
+            int totalPayloadLength = hashSize + contentSize;
 
-            if (totalPacketLength > Constants.MAX_LENGTH) {
+            if (totalPayloadLength > Constants.MAX_LENGTH) {
                 ctx.channel().disconnect();
                 return;
             }
 
             DecoderUtils.validate(ctx, packetId, hashSize, contentSize, timestamp);
 
-            if (buffer.readableBytes() < totalPacketLength) {
+            if (buffer.readableBytes() < totalPayloadLength) {
                 buffer.resetReaderIndex();
                 return;
             }
 
             try {
                 Carrier carrier = DecoderUtils.split(version, packetId, hashSize, contentSize, timestamp, buffer);
-
                 objects.add(carrier);
             } catch (Exception e) {
+                System.err.println("Error during packet splitting: " + e.getMessage());
+                e.printStackTrace();
                 ctx.channel().disconnect();
                 return;
             }

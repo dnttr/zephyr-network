@@ -1,25 +1,47 @@
 package org.dnttr.zephyr.network.communication.core.channel;
 
 import io.netty.channel.*;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.timeout.ReadTimeoutHandler;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.dnttr.zephyr.network.communication.api.server.heartbeat.ServerTimeoutHandler;
 import org.dnttr.zephyr.network.communication.core.codec.PacketDecoder;
 import org.dnttr.zephyr.network.communication.core.codec.PacketEncoder;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author dnttr
  */
 
+@RequiredArgsConstructor
 public abstract class ChannelAdapter<I, O> extends ChannelInitializer<SocketChannel> {
+
+    private final boolean timeout;
 
     @Getter(AccessLevel.PRIVATE)
     private final ContextRegistry registry = new ContextRegistry();
 
     @Override
     protected void initChannel(SocketChannel socketChannel) {
-        socketChannel.pipeline().addLast(new PacketEncoder(), new PacketDecoder(), new InboundAdapter(this), new OutboundAdapter(this));
+        List<ChannelHandler> handlers = new ArrayList<>();
+
+        if (this.timeout) {
+            handlers.add(new ReadTimeoutHandler(40, TimeUnit.SECONDS));
+            handlers.add(new ServerTimeoutHandler());
+        }
+
+        handlers.add(new PacketEncoder());
+        handlers.add(new PacketDecoder());
+        handlers.add(new InboundAdapter(this));
+        handlers.add(new OutboundAdapter(this));
+
+        socketChannel.pipeline().addLast(handlers.toArray(new ChannelHandler[0]));
     }
 
     protected abstract void channelRead(ChannelContext context, O input) throws Exception;

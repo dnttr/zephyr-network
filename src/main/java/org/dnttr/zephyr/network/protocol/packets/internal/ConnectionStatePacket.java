@@ -16,7 +16,7 @@ import java.util.Arrays;
 
 @Getter
 @Serializable
-@Data(identity = -0x1, protocol = Constants.VER_1)
+@Data(identity = -1, protocol = Constants.VER_1)
 public class ConnectionStatePacket extends Packet {
 
     @Address(address = "sessionState")

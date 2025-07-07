@@ -13,7 +13,7 @@ import org.dnttr.zephyr.serializer.annotations.Serializable;
 
 @Getter
 @Serializable
-@Data(identity = -0x5, protocol = Constants.VER_1)
+@Data(identity = -5, protocol = Constants.VER_1)
 public final class ConnectionIdentifierPacket extends Packet {
 
     @Address(address = "name")

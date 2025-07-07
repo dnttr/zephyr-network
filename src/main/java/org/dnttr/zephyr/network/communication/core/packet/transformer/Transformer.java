@@ -11,11 +11,17 @@ import org.dnttr.zephyr.network.communication.core.packet.processor.impl.Standar
 import org.dnttr.zephyr.network.protocol.Data;
 import org.dnttr.zephyr.network.protocol.Packet;
 import org.dnttr.zephyr.network.protocol.packets.client.ClientAvailabilityPacket;
-import org.dnttr.zephyr.network.protocol.packets.internal.ConnectionStatePacket;
-import org.dnttr.zephyr.network.protocol.packets.internal.ConnectionIdentifierPacket;
+import org.dnttr.zephyr.network.protocol.packets.internal.*;
 import org.dnttr.zephyr.network.protocol.packets.internal.authorization.ConnectionNoncePacket;
 import org.dnttr.zephyr.network.protocol.packets.internal.authorization.ConnectionPrivatePacket;
 import org.dnttr.zephyr.network.protocol.packets.internal.authorization.ConnectionPublicPacket;
+import org.dnttr.zephyr.network.protocol.packets.internal.relay.ConnectionRelayAnswer;
+import org.dnttr.zephyr.network.protocol.packets.internal.relay.ConnectionRelayRequest;
+import org.dnttr.zephyr.network.protocol.packets.internal.relay.ConnectionRelayResponse;
+import org.dnttr.zephyr.network.protocol.packets.internal.relay.ConnectionRelayTerminatePacket;
+import org.dnttr.zephyr.network.protocol.packets.shared.ChatMessagePacket;
+import org.dnttr.zephyr.network.protocol.packets.shared.UserDescriptionPacket;
+import org.dnttr.zephyr.network.protocol.packets.shared.UserStatusPacket;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,10 +48,27 @@ public abstract class Transformer<I> {
 
         List<Class<? extends Packet>> packetClasses = List.of(
                 ConnectionStatePacket.class,
+                ConnectionKeepAlivePacket.class,
+
                 ConnectionPrivatePacket.class,
                 ConnectionPublicPacket.class,
                 ConnectionNoncePacket.class,
+
                 ConnectionIdentifierPacket.class,
+                ConnectionIdentifierRefusedPacket.class,
+                ConnectionIdentifierSuccessPacket.class,
+                ConnectionGetUserListPacket.class,
+                ConnectionUserListPacket.class,
+
+                ConnectionRelayRequest.class,
+                ConnectionRelayResponse.class,
+                ConnectionRelayAnswer.class,
+                ConnectionRelayTerminatePacket.class,
+
+                ChatMessagePacket.class,
+                UserDescriptionPacket.class,
+                UserStatusPacket.class,
+
                 ClientAvailabilityPacket.class
         );
 

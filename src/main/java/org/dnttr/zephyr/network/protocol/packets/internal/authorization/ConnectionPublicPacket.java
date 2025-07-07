@@ -14,7 +14,7 @@ import static org.dnttr.zephyr.network.protocol.Constants.VER_1;
 
 @Getter
 @Serializable
-@Data(identity = -0x2, protocol = VER_1)
+@Data(identity = -2, protocol = VER_1)
 public final class ConnectionPublicPacket extends Packet {
 
     @Address(address = "publicKey")

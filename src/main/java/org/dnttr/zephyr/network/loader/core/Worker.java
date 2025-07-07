@@ -43,6 +43,8 @@ public abstract class Worker<B> {
         this.environment = new Environment(this);
 
         this.endpoint = endpoint;
+
+        endpoint.setParent(this);
     }
 
     final void construct0() {

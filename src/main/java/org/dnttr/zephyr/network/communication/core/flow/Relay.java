@@ -1,93 +1,96 @@
 package org.dnttr.zephyr.network.communication.core.flow;
 
-import org.dnttr.zephyr.event.EventSubscriber;
-import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
-import org.dnttr.zephyr.network.communication.core.flow.events.packet.PacketInboundEvent;
+import org.dnttr.zephyr.network.communication.api.server.relay.Candidate;
 import org.dnttr.zephyr.network.protocol.Packet;
+import org.dnttr.zephyr.network.protocol.packets.internal.relay.ConnectionRelayTerminatePacket;
 import org.dnttr.zephyr.network.protocol.packets.shared.ChatMessagePacket;
+import org.dnttr.zephyr.network.protocol.packets.shared.UserDescriptionPacket;
 import org.dnttr.zephyr.network.protocol.packets.shared.UserStatusPacket;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author dnttr
  */
+public class Relay {
 
-public final class Relay {
+    private final Set<Class<? extends Packet>> relayedPackets;
 
-    private final Map<Long, ChannelContext> destinations = new ConcurrentHashMap<>();
-    private final Set<Class<? extends Packet>> packets;
+    private final Candidate candidate1;
+    private final Candidate candidate2;
 
-    public Relay() {
-        this.packets = Set.of(ChatMessagePacket.class, UserStatusPacket.class);
+    public Relay(Candidate candidate1, Candidate candidate2) {
+        this.candidate1 = candidate1;
+        this.candidate2 = candidate2;
+
+        this.relayedPackets = Set.of(
+                ChatMessagePacket.class,
+                UserStatusPacket.class,
+                UserDescriptionPacket.class
+        );
+
+        this.candidate1.getConsumer().setFree(false);
+        this.candidate2.getConsumer().setFree(false);
+
+        System.err.printf("[RELAY-INFO] New relay established between %s (%s) and %s (%s). Consumers set to not free.%n",
+                candidate1.getName(), candidate1.getConsumer().getUuid(),
+                candidate2.getName(), candidate2.getConsumer().getUuid());
     }
 
     /**
-     * Links a source channel to a target channel. This is for one-to-one routing,
-     * which might be less relevant for a general chat but kept for existing structure.
-     *
-     * @param source The source channel context.
-     * @param target The target channel context.
+     * Forwards a packet from a sender to the other participant if it's an allowed type.
+     * @param senderUuid The UUID of the packet sender.
+     * @param packet The packet to be relayed.
      */
-    public void link(@NotNull ChannelContext source, @NotNull ChannelContext target) {
-        this.destinations.put(source.getUuid(), target);
-    }
+    public void exchange(long senderUuid, Packet packet) {
+        System.err.printf("[RELAY-DEBUG] Exchange attempt from sender UUID %s with packet type %s%n",
+                senderUuid, packet.getClass().getSimpleName());
 
-    /**
-     * Unlinks a source channel.
-     *
-     * @param source The source channel context to unlink.
-     */
-    public void unlink(@NotNull ChannelContext source) {
-        this.destinations.remove(source.getUuid());
-    }
-
-
-    /**
-     * Event handler for incoming packets. Routes packets based on their type.
-     *
-     * @param ev The PacketInboundEvent containing the packet and consumer context.
-     */
-    @EventSubscriber
-    public void onPacketReceived(final PacketInboundEvent ev) {
-        if (this.destinations.isEmpty() || this.packets.isEmpty()) {
+        if (!relayedPackets.contains(packet.getClass())) {
+            System.err.printf("[RELAY-WARN] Packet type %s is not allowed for relay. Dropping packet.%n",
+                    packet.getClass().getSimpleName());
             return;
         }
 
-        var packet = ev.getPacket();
-        var consumer = ev.getConsumer();
-
-        if (!this.packets.contains(packet.getClass())) {
-            return;
-        }
-
-        var context = this.destinations.get(consumer.getUuid());
-
-        if (context != null) {
-            if (packets.contains(packet.getClass())) {
-                broadcast(context, packet);
+        try {
+            if (this.candidate1.getConsumer().getUuid() == senderUuid) {
+                this.candidate2.getConsumer().send(packet);
+            } else if (this.candidate2.getConsumer().getUuid() == senderUuid) {
+                this.candidate1.getConsumer().send(packet);
+            } else {
+                System.err.printf("[RELAY-WARN] Packet from unknown sender UUID %s. Not part of this relay (%s, %s). Dropping.%n",
+                        senderUuid, candidate1.getConsumer().getUuid(), candidate2.getConsumer().getUuid());
             }
+        } catch (Exception e) {
+            System.err.printf("[RELAY-ERROR] Error during packet exchange for sender UUID %s, packet %s: %s%n",
+                    senderUuid, packet.getClass().getSimpleName(), e.getMessage());
+            e.printStackTrace();
         }
     }
 
     /**
-     * Broadcasts a packet to all active channels except the sender.
-     *
-     * @param packet The packet to broadcast.
-     * @param context The ChannelContext of the sender, to exclude from broadcast.
+     * Checks if a given consumer UUID is part of this relay.
      */
-    private void broadcast(@NotNull ChannelContext context, @NotNull Packet packet) {
-        if (this.destinations.isEmpty()) {
-            return;
-        }
+    public boolean contains(long uuid) {
+        return this.candidate1.getConsumer().getUuid() == uuid || this.candidate2.getConsumer().getUuid() == uuid;
+    }
 
-        this.destinations.values().stream() //new style...
-                .filter(destination ->
-                        destination.getUuid() != context.getUuid())
-                .forEach(destination ->
-                        destination.getChannel().writeAndFlush(packet));
+    /**
+     * Terminates the relay, frees both participants, and notifies the other party.
+     * @param initiatorUuid The UUID of the client that initiated the termination.
+     */
+    public void terminate(long initiatorUuid) {
+        System.err.printf("[RELAY-INFO] Termination initiated by UUID %s for relay between %s and %s.%n",
+                initiatorUuid, candidate1.getName(), candidate2.getName());
+
+        this.candidate1.getConsumer().setFree(true);
+        this.candidate2.getConsumer().setFree(true);
+
+        try {
+            Candidate recipient = candidate1.getConsumer().getUuid() == initiatorUuid ? candidate2 : candidate1;
+            recipient.getConsumer().send(new ConnectionRelayTerminatePacket("The other user disconnected."));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

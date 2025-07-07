@@ -1,5 +1,7 @@
 package network;
 
+import org.dnttr.zephyr.event.EventBus;
+import org.dnttr.zephyr.network.communication.core.managers.ObserverManager;
 import org.dnttr.zephyr.network.loader.api.server.Server;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -26,6 +28,6 @@ public class ServerTest {
 
     @Test
     public void init() {
-        new Server(new InetSocketAddress(12345));
+        new Server(new InetSocketAddress(12345), new EventBus(), new ObserverManager());
     }
 }

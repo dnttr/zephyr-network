@@ -7,17 +7,22 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import org.dnttr.zephyr.event.EventBus;
 import org.dnttr.zephyr.network.communication.api.client.ClientChannelController;
 import org.dnttr.zephyr.network.communication.api.client.flow.ClientSessionEndpoint;
+import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelHandler;
+import org.dnttr.zephyr.network.communication.core.channel.ContextRegistry;
 import org.dnttr.zephyr.network.communication.core.managers.ObserverManager;
 import org.dnttr.zephyr.network.communication.core.packet.transformer.TransformerFacade;
 import org.dnttr.zephyr.network.loader.core.Worker;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Client extends Worker<Bootstrap> {
 
-    public Client(InetSocketAddress socketAddress) {
-        super(socketAddress, new EventBus(), new Bootstrap(), new ObserverManager(), new ClientSessionEndpoint());
+    public Client(InetSocketAddress socketAddress, EventBus eventBus, ObserverManager observerManager) {
+        super(socketAddress, eventBus, new Bootstrap(), new ObserverManager(), new ClientSessionEndpoint(observerManager, eventBus));
 
         this.environment.execute();
     }
@@ -31,21 +36,28 @@ public class Client extends Worker<Bootstrap> {
                 group(this.boss).
                 channel(NioSocketChannel.class).
                 option(ChannelOption.SO_KEEPALIVE, true).
-                handler(new ChannelHandler(controller, this.eventBus));
+                handler(new ChannelHandler(controller, this.eventBus, false));
+    }
+
+    @Nullable
+    public ChannelContext getContext() {
+        HashMap<String, ChannelContext> contexts = ContextRegistry.getContexts();
+
+        return contexts.entrySet().stream().findFirst().map(Map.Entry::getValue).orElse(null);
+
     }
 
     @Override
     protected void execute(Bootstrap bootstrap) {
-        try{
-            ChannelFuture future = bootstrap.connect(getAddress()).addListener(f -> {
+        try{ChannelFuture future = bootstrap.connect(getAddress()).addListener(f -> {
                 if (f.isSuccess()) {
-                    System.out.println("Client connected to " + getAddress());
+                    System.err.println("Client connected to " + getAddress());
                 }
             }).sync();
 
             future.channel().closeFuture().sync();
         } catch (Exception _) {
-            System.out.println("Unable to connect to " + getAddress());
+            System.err.println("Unable to connect to " + getAddress());
         } finally {
             destroy();
         }

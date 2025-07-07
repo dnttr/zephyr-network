@@ -4,7 +4,6 @@ import org.dnttr.zephyr.event.EventBus;
 import org.dnttr.zephyr.network.communication.api.server.flow.ServerSessionOrchestrator;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelContext;
 import org.dnttr.zephyr.network.communication.core.channel.ChannelController;
-import org.dnttr.zephyr.network.communication.core.flow.Relay;
 import org.dnttr.zephyr.network.communication.core.flow.events.internal.channel.ConnectionEstablishedEvent;
 import org.dnttr.zephyr.network.communication.core.managers.ObserverManager;
 import org.dnttr.zephyr.network.communication.core.packet.transformer.TransformerFacade;
@@ -22,7 +21,6 @@ public final class ServerChannelController extends ChannelController {
         super(eventBus, observerManager, transformerFacade);
 
         this.getEventBus().register(new ServerSessionOrchestrator(this.getEventBus(), this.getObserverManager()));
-        this.getEventBus().register(new Relay());
         this.getEventBus().register(this);
     }
 

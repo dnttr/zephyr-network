@@ -22,5 +22,5 @@ public class Constants {
      * A set of packet identifiers that should be exempt from the standard encryption/decryption process.
      * This is necessary for handshake packets like nonce exchanges that must be sent in plaintext.
      */
-    public static final Set<Integer> ENCRYPTION_EXEMPT_IDS = Set.of(-0x3);
+    public static final Set<Integer> ENCRYPTION_EXEMPT_IDS = Set.of(-3, -12);
 }
